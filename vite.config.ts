@@ -12,7 +12,8 @@ export default defineConfig({
     build: {
         rollupOptions: {
             input: {
-                popup: 'src/tablist/tablist.html'
+                tabhtml: 'src/tablist/tablist.html',
+                tabjs: 'src/tablist/tabs.ts'
             }
         }
     },
