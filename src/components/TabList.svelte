@@ -52,6 +52,7 @@
 </script>
 
 <div class="container">
+    <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"}</h1>
     <button on:click={closeSelectedTabs}>Close selected</button>
     {#each tabs as tab (tab.id)}
         <div class="tab" on:click={() => selectTab(tab)} style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">{tab.title}</div>
