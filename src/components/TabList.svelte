@@ -57,3 +57,11 @@
         <div class="tab" on:click={() => selectTab(tab)} style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">{tab.title}</div>
     {/each}
 </div>
+
+<style>
+    .tab {
+        font-size: 24px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+</style>
