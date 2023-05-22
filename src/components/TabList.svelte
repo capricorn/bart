@@ -36,16 +36,14 @@
         }
     }
 
-    function closeSelectedTabs() {
+    async function closeSelectedTabs() {
         for (const tabId of selectedTabIds) {
             console.log('Closing tab: ' + tabId);
-            chrome.tabs.remove(tabId);
+            await chrome.tabs.remove(tabId);
         }
 
         selectedTabIds = new Set();
-        tabs = [];
-        // WIP: Reloading tab list after deletion 
-        fetchTabs().then(() => console.log('Reloaded tab list.'));
+        await fetchTabs();
     }
 
     onMount(async () => {
