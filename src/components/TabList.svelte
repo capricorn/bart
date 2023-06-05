@@ -45,7 +45,11 @@
 
     function selectTab(tab: Tab) {
         console.log(selectedTabIds);
-        if (selectedTabIds.has(tab.id)) {
+        if (metaKeyPressed) {
+            console.log('switching to tab');
+            chrome.tabs.update(tab.id, { active: true })
+            chrome.windows.update(tab.windowId, { focused: true })
+        } else if (selectedTabIds.has(tab.id)) {
             selectedTabIds.delete(tab.id);
         } else {
             selectedTabIds.add(tab.id);
