@@ -141,8 +141,10 @@
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp}/>
 
 <div class="container" >
-    <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"}</h1>
-    <button on:click={closeSelectedTabs}>Close selected</button>
+    <div id="control-header">
+        <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"}</h1>
+        <button on:click={closeSelectedTabs}>Close selected</button>
+    </div>
     {#each tabs as tab (tab.id)}
         <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
             on:click={() => selectTab(tab)} 
@@ -161,5 +163,11 @@
     .hovered_tab {
         text-decoration: underline;
         cursor: pointer;
+    }
+
+    #control-header {
+        position: sticky;
+        top: 0;
+        background-color: white;
     }
 </style>
