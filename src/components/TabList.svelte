@@ -158,6 +158,7 @@
         font-size: 24px;
         padding-top: 4px;
         padding-bottom: 4px;
+        user-select: none;
     }
 
     .hovered_tab {
