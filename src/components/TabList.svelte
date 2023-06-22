@@ -11,6 +11,7 @@
     let hoveredTab: Tab = undefined;
 
     let lastTabSelected: Tab = undefined;
+    let tabRegionEnd: Tab = undefined;
 
     $: selections = Array.from(selectedTabIds).sort()
     $: {
@@ -63,27 +64,50 @@
         } else if (shiftKeyPressed) {
             console.log('shift select occurring')
             // TODO: Better optional handling?
-            let startIndex = tabs.map(f => f.id).indexOf(lastTabSelected!.id);
-            let endIndex = tabs.map(f => f.id).indexOf(tab.id);
+            let relIndex = tabs.map(f => f.id).indexOf(lastTabSelected!.id);
+            let tabIndex = tabs.map(f => f.id).indexOf(tab.id);
+
+            let startIndex = Math.min(relIndex, tabIndex);
+            let endIndex = Math.max(relIndex, tabIndex);
+
+            console.log('start: ' + startIndex);
+            console.log('end: ' + endIndex);
 
             let selectedTabIdsRegion = Array.from(tabs.entries())
                 .filter(val => (val[0] >= startIndex && val[0] <= endIndex))
                 .map(f => f[1].id);
             
-            /*
-            let tabIdsToRemove = selectedTabIdsRegion.filter(f => selectedTabIds.has(f));
+            // This is the previous tab region spot
+            if (tabRegionEnd != undefined) {
+                let regionStartIndex = tabs.map(f => f.id).indexOf(lastTabSelected!.id);
+                let regionEndIndex = tabs.map(f => f.id).indexOf(tabRegionEnd.id);
 
-            console.log('tab region: ' + selectedTabIdsRegion);
+                let startIndex = Math.min(regionStartIndex, regionEndIndex);
+                let endIndex = Math.max(regionStartIndex, regionEndIndex);
 
-            selectedTabIds = new Set(_.union(
-                _.difference(...selectedTabIds, tabIdsToRemove),
-                selectedTabIdsRegion
-            ));
-            */
+                console.log('prev start: ' + startIndex);
+                console.log('prev end: ' + endIndex);
+
+                let prevRegionIds = Array.from(tabs.entries())
+                    .filter(val => (val[0] >= startIndex && val[0] <= endIndex))
+                    .map(f => f[1].id);
+
+                console.log('Prev region ids: ' + prevRegionIds);
+
+                // Take the intersection
+                for (const id of prevRegionIds) {
+                    selectedTabIds.delete(id);
+                }
+
+            }
+
+            tabRegionEnd = tab;
             selectedTabIds = new Set([...selectedTabIds, ...selectedTabIdsRegion]);
         } else if (selectedTabIds.has(tab.id)) {
             selectedTabIds.delete(tab.id);
+            tabRegionEnd = undefined;
         } else {
+            tabRegionEnd = undefined;
             lastTabSelected = tab;
             selectedTabIds.add(tab.id);
         }
