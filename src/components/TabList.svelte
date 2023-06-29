@@ -142,7 +142,7 @@
 
 <div class="container" >
     <div id="control-header">
-        <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"}</h1>
+        <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected</h1>
         <button on:click={closeSelectedTabs}>Close selected</button>
     </div>
     {#each tabs as tab (tab.id)}
