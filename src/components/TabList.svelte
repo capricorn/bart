@@ -10,6 +10,8 @@
     let shiftKeyPressed = false;
     let hoveredTab: Tab = undefined;
 
+    let showTabDomain = false;
+
     let lastTabSelected: Tab = undefined;
     let tabRegionEnd: Tab = undefined;
 
@@ -143,13 +145,29 @@
 <div class="container" >
     <div id="control-header">
         <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected</h1>
+        <div id="visual-toggles">
+            <h4>Display</h4>
+            <label style="display: block; bottom-padding: 16px">
+                <input type="checkbox" bind:checked={showTabDomain} />
+                Show domain
+            </label>
+        </div>
+        
         <button on:click={closeSelectedTabs}>Close selected</button>
     </div>
     {#each tabs as tab (tab.id)}
         <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
             on:click={() => selectTab(tab)} 
             on:mouseover={() => mouseOverTab(tab)}
-            style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">{tab.title}</div>
+            style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
+
+            {tab.title}
+            <br>
+            {#if showTabDomain}
+            <span class="tab-link">{tab.url}</span>
+            {/if}
+
+        </div>
     {/each}
 </div>
 
@@ -161,6 +179,11 @@
         user-select: none;
     }
 
+    .tab-link {
+        font-size: 20px;
+        color: gray;
+    }
+
     .hovered_tab {
         text-decoration: underline;
         cursor: pointer;
@@ -170,5 +193,11 @@
         position: sticky;
         top: 0;
         background-color: white;
+    }
+
+    #visual-toggles {
+        display: block;
+        padding-bottom: 16px;
+        user-select: none;
     }
 </style>
