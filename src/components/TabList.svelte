@@ -11,6 +11,7 @@
     let hoveredTab: Tab = undefined;
 
     let showTabDomain = false;
+    let showTabWindow = false;
 
     let lastTabSelected: Tab = undefined;
     let tabRegionEnd: Tab = undefined;
@@ -147,9 +148,13 @@
         <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected</h1>
         <div id="visual-toggles">
             <h4>Display</h4>
-            <label style="display: block; bottom-padding: 16px">
+            <label style="display: block">
                 <input type="checkbox" bind:checked={showTabDomain} />
                 Show domain
+            </label>
+            <label style="display: block; bottom-padding: 16px">
+                <input type="checkbox" bind:checked={showTabWindow} />
+                Show window
             </label>
         </div>
         
@@ -165,6 +170,10 @@
             <br>
             {#if showTabDomain}
             <span class="tab-link">{tab.url}</span>
+            <br>
+            {/if}
+            {#if showTabWindow}
+            <span class="tab-link">Window {tab.windowId}</span>
             {/if}
 
         </div>
