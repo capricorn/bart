@@ -10,16 +10,51 @@
     let shiftKeyPressed = false;
     let hoveredTab: Tab = undefined;
 
+    // TODO: A better default?
+    let groupBySelection = "";
+
     let showTabDomain = false;
     let showTabWindow = false;
 
     let lastTabSelected: Tab = undefined;
     let tabRegionEnd: Tab = undefined;
 
+    let filteredTabs = tabs;
+
+    $: {
+        console.log('updating filter: ' + groupBySelection);
+        console.log(groupBySelection);
+        if (groupBySelection == "domain") {
+            filteredTabs = filterTabs();
+            filteredTabs = filteredTabs;
+            console.log(filteredTabs.map(f => new URL(f.url).hostname));
+        } else {
+            console.log('restoring tabs');
+            filteredTabs = tabs;
+            filteredTabs = filteredTabs;
+            console.log(filteredTabs.map(f => new URL(f.url).hostname));
+        }
+    }
+
     $: selections = Array.from(selectedTabIds).sort()
     $: {
         console.log('selections');
         console.log(selectedTabIds);
+    }
+
+    function filterTabs(): Tab[] {
+        return [...tabs].sort((a,b) => {
+            let aHost = new URL(a.url).hostname;
+            let bHost = new URL(b.url).hostname;
+
+            if (aHost < bHost) {
+                return -1;
+            } else if (aHost > bHost) {
+                return 1;
+            } else {
+                return 0;
+            }
+        })
     }
 
     function mouseOverTab(tab: Tab) {
@@ -146,6 +181,15 @@
 <div class="container" >
     <div id="control-header">
         <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected</h1>
+        <div>
+            <label for="group-select">Group by</label>
+            <select name="group-by" id="group-select" bind:value={groupBySelection}>
+                <option value="">None</option>
+                <option value="domain">Domain</option>
+                <option value="window">Window</option>
+            </select>
+        </div>
+
         <div id="visual-toggles">
             <h4>Display</h4>
             <label style="display: block">
@@ -160,7 +204,7 @@
         
         <button on:click={closeSelectedTabs}>Close selected</button>
     </div>
-    {#each tabs as tab (tab.id)}
+    {#each filteredTabs as tab (tab.id)}
         <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
             on:click={() => selectTab(tab)} 
             on:mouseover={() => mouseOverTab(tab)}
