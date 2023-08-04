@@ -14,13 +14,15 @@
          */
         "allowJs": true,
         "checkJs": true,
-        "isolatedModules": true
+        "isolatedModules": true,
+        "types": ["jest"],
     },
     "include": [
         "src/**/*.d.ts",
         "src/**/*.ts",
         "src/**/*.js",
-        "src/**/*.svelte"
+        "src/**/*.svelte",
+        "tests/*.ts"
     ],
     "references": [{ "path": "./tsconfig.node.json" }]
 }
