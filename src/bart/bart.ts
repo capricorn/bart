@@ -68,31 +68,36 @@ namespace Bart {
             var tokenState: TokenState = undefined;
             var tokens: String[] = [];
 
-            // ONLY for tokenizing.. can lex later
             for (var i = 0; i < input.length; i++) {
                 // State is set for tracking the current parsing context
-                if (input[i] == "\"") {
+                if (input[i] == '"') {
                     if (tokenState == TokenState.QUOTE) {
                         // Quote closed; (TODO: Handle escapes?)
-                        // TODO: Return quote here
                         tokenState = undefined;
                         tokens.push(input.slice(tokenStart, i+1));
                     } else {
                         tokenStart = i;
                         // Can ignore all other inputs
                         tokenState = TokenState.QUOTE;
-                        continue;
                     }
                 } else if (input[i] == " ") {
                     // Ignore whitespace
                     if (tokenState == TokenState.TOKEN) {
                         // This delineates the end of the token sequence;
                         // slice the token here and return it.
+                        tokens.push(input.slice(tokenStart, i));
+                        tokenState = undefined;
                     }
-                    continue;
                 } else {
-                    // Token is non-whitespace, non-quote
-                    // TODO: Encountering a quote should be an error
+                    if (tokenState == TokenState.QUOTE) {
+                        continue;
+                    } else if (tokenState == undefined) {
+                        tokenStart = i;
+                        tokenState = TokenState.TOKEN;
+                    } else if (i == input.length-1) {
+                        // End of string -- this is the end of the token
+                        tokens.push(input.slice(tokenStart, i+1));
+                    }
                 }
             }
 
