@@ -47,11 +47,16 @@ namespace Bart {
         }
 
         export enum TokenType {
-            StringArg
+            StringArg,
+            Filter
         }
 
         export function isString(token: string): boolean {
             return token.startsWith('"') && token.endsWith('"');
+        }
+
+        export function isFilter(token: string): boolean {
+            return [ 'title', 'url' ].includes(token);
         }
 
         export function tokenize(input: string): string[] {
@@ -129,6 +134,8 @@ namespace Bart {
             for (const token of tokenizedInput) {
                 if (Bart.Lexer.isString(token)) {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.StringArg, token));
+                } else if (Bart.Lexer.isFilter(token)) {
+                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Filter, token));
                 }
             }
 

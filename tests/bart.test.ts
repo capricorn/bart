@@ -14,3 +14,11 @@ test('Test lexing of input containing strings', () => {
         new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.StringArg, '"asdf"')
     ]);
 });
+
+test('Test lexing of input containing a filter', () => {
+    let results = Bart.Lexer.lex('url "xyz"');
+    expect(results).toEqual([
+        new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Filter, 'url'),
+        new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.StringArg, '"xyz"')
+    ]);
+});
