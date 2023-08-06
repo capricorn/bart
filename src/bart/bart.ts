@@ -21,10 +21,23 @@
 
 namespace Bart {
     export namespace Lexer {
-        class BartString {
-            start: number
-            end: number
-            value: string
+        export class Token {
+            start: number;
+            end: number;
+            type: TokenType;
+            value: string;
+
+            constructor(
+                start: number,
+                end: number,
+                type: TokenType,
+                value: string
+            ) {
+                this.start = start;
+                this.end = end;
+                this.type = type;
+                this.value = value;
+            }
         }
 
         enum TokenState {
@@ -33,11 +46,15 @@ namespace Bart {
             WHITESPACE  // necessary?
         }
 
-        export function isString(token: string): boolean {
-            return false
+        export enum TokenType {
+            StringArg
         }
 
-        export function tokenize(input: string): String[] {
+        export function isString(token: string): boolean {
+            return token.startsWith('"') && token.endsWith('"');
+        }
+
+        export function tokenize(input: string): string[] {
             /*
             function transition(symbol: string, state?: TokenState): TokenState {
                 switch (state as TokenState) {
@@ -66,7 +83,7 @@ namespace Bart {
             // - have to account for quotes
             var tokenStart = 0;
             var tokenState: TokenState = undefined;
-            var tokens: String[] = [];
+            var tokens: string[] = [];
 
             for (var i = 0; i < input.length; i++) {
                 // State is set for tracking the current parsing context
@@ -104,6 +121,20 @@ namespace Bart {
             return tokens;
         }
 
+        export function lex(input: string) {
+            var tokenizedInput = Bart.Lexer.tokenize(input);
+            var tokens: Bart.Lexer.Token[] = [];
+
+            // TODO: start/end position included in `tokenize` output
+            for (const token of tokenizedInput) {
+                if (Bart.Lexer.isString(token)) {
+                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.StringArg, token));
+                }
+            }
+
+            return tokens;
+        }
+
         /*
         export function lexString(token: string): BartString {
         }
@@ -113,20 +144,3 @@ namespace Bart {
 
 // TODO: Is this ok?
 export { Bart }
-
-function lex(input: string) {
-    // This type of tokenizer will not work with double quotes..
-    // So tokenization must be more complex.. (needs to know if in double quotes)
-    var tokenizedInput = input
-                .replace(/\s+/, " ")
-                .split(" ")
-    
-    // Classify from tokenized input various symbols
-    // Iterate over the input. If string, handle
-
-    for (const token of tokenizedInput) {
-        if (Bart.Lexer.isString(token)) {
-            // attempt to parse here
-        }
-    }
-}
