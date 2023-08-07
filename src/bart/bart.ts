@@ -161,6 +161,63 @@ namespace Bart {
         }
         */
     }
+
+    export namespace Parser {
+        export class StringCombinator {
+            combinator: string
+            strings: string[]
+            // If there is a nested combinator it is pointed to here
+            child?: StringCombinator
+
+            constructor(
+                combinator: string,
+                strings: Lexer.Token[],
+                child?: StringCombinator
+            ) {
+                this.combinator = combinator;
+                this.strings = strings.map(s => s.value);
+                this.child = child;
+            }
+        }
+
+        export function consume(
+            tokens: Bart.Lexer.Token[],
+            predicate: (token: Bart.Lexer.Token) => boolean
+        ): [consumed: Bart.Lexer.Token[], remaining: Bart.Lexer.Token[]] {
+            for (var i = 0; i < tokens.length; i++) {
+                if (predicate(tokens[i]) == false) {
+                    break;
+                }
+            }
+
+            return [tokens.slice(0, i), tokens.slice(i)];
+        }
+
+        export function parseStringCombinator(
+            tokens: Bart.Lexer.Token[]
+        ): [result: StringCombinator, remainingTokens: Bart.Lexer.Token[]] {
+            // If the first element is a string, implicit & combinator
+            // Otherwise, consume tokens until.. consume given predicate..?
+
+            // TODO: Handle nested combinator
+            // (Important to verify it's a string combinator, not filter combinator)
+            let combinator = '&';
+            if (Lexer.isCombinator(tokens[0].value)) {
+                combinator = tokens[0].value;
+                tokens = tokens.slice(1);
+            }
+
+            let [consumed, remaining] = consume(
+                tokens,
+                (token) => { 
+                    return Lexer.isString(token.value) 
+                }, 
+            )
+
+            // Create a string combinator from `consumed`
+            return [ new StringCombinator(combinator, consumed), remaining ];
+        }
+    }
 } 
 
 // TODO: Is this ok?
