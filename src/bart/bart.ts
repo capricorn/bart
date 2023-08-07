@@ -248,38 +248,13 @@ namespace Bart {
                 }
             }
 
-            // TODO
-            return [combinator, []];
+            return [combinator, tokens];
         }
 
         export function parseStringCombinator(
             tokens: Bart.Lexer.Token[]
         ): [result: StringCombinator, remainingTokens: Bart.Lexer.Token[]] {
-            // If the first element is a string, implicit & combinator
-            // Otherwise, consume tokens until.. consume given predicate..?
-
-            // TODO: Handle nested combinator
-            // (Important to verify it's a string combinator, not filter combinator)
-
-
-
-            let combinator = '&';
-            if (Lexer.isCombinator(tokens[0].value)) {
-                combinator = tokens[0].value;
-                tokens = tokens.slice(1);
-            }
-
-            // Known at this point that it's a string combinator; go from here
-
-            let [consumed, remaining] = consume(
-                tokens,
-                (token) => { 
-                    return Lexer.isString(token.value) 
-                }, 
-            )
-
-            // Create a string combinator from `consumed`
-            return [ new StringCombinator(combinator, consumed), remaining ];
+            return consumeStringCombinator(tokens);
         }
     }
 } 
