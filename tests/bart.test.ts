@@ -91,11 +91,11 @@ test('Implicit "&" StringCombinator when parsing single string', () => {
 });
 
 test('Consume complex string combinator', () => {
-    let query = '| "abc" ! "xyz" | "ijk" "ooo"'
+    let query = '"abc" ! "xyz" | "ijk" "ooo"'
     let lex = Bart.Lexer.lex(query);
 
     let [combinator, remainder] = Bart.Parser.consumeStringCombinator(lex);
-    expect(combinator.combinator).toBe('|');
+    expect(combinator.combinator).toBe('&');
     expect(combinator.strings).toEqual(['"abc"']);
     // A child for negation and a child for the nested OR
     expect(combinator.children.length).toBe(2);

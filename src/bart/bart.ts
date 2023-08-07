@@ -220,13 +220,14 @@ namespace Bart {
             return [new StringCombinator('!', [negatedString], []), tokens.slice(2) ];
         }
 
-        // TODO
         export function consumeStringCombinator(
             tokens: Lexer.Token[]
         ): [result: StringCombinator, remaining: Lexer.Token[]] {
-            // TODO: Should handle implicit '&' case
-            let combinator = new StringCombinator(tokens[0].value, [], []);
-            tokens = tokens.slice(1);
+            let combinator = new StringCombinator('&', [], []);
+            if (Lexer.isCombinator(tokens[0].value)) {
+                combinator.combinator = tokens[0].value;
+                tokens = tokens.slice(1);
+            }
 
             // Iterate tokens here and identify.
             while (tokens.length > 0) {
