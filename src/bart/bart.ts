@@ -49,7 +49,8 @@ namespace Bart {
         export enum TokenType {
             StringArg,
             Filter,
-            Negation
+            Negation,
+            Combinator
         }
 
         export function isString(token: string): boolean {
@@ -62,6 +63,10 @@ namespace Bart {
 
         export function isNegation(token: string): boolean {
             return token == '!';
+        }
+
+        export function isCombinator(token: string): boolean {
+            return ['|', '&'].includes(token);
         }
 
         export function tokenize(input: string): string[] {
@@ -143,6 +148,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Filter, token));
                 } else if (Bart.Lexer.isNegation(token)) {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Negation, token));
+                } else if (Bart.Lexer.isCombinator(token)) {
+                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Combinator, token));
                 }
             }
 
