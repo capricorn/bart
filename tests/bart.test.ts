@@ -89,3 +89,19 @@ test('Implicit "&" StringCombinator when parsing single string', () => {
     expect(combinator.combinator).toBe('&');
     expect(combinator.strings).toEqual(['"ijk"']);
 });
+
+test('Consume complex string combinator', () => {
+    let query = '| "abc" ! "xyz" | "ijk" "ooo"'
+    let lex = Bart.Lexer.lex(query);
+
+    let [combinator, remainder] = Bart.Parser.consumeStringCombinator(lex);
+    expect(combinator.combinator).toBe('|');
+    expect(combinator.strings).toEqual(['"abc"']);
+    // A child for negation and a child for the nested OR
+    expect(combinator.children.length).toBe(2);
+    expect(combinator.children[0].combinator).toBe('!');
+
+    let nestedCombinator = combinator.children[1];
+    expect(nestedCombinator.combinator).toBe('|');
+    expect(nestedCombinator.strings).toEqual(['"ijk"', '"ooo"']);
+});

@@ -167,16 +167,16 @@ namespace Bart {
             combinator: string
             strings: string[]
             // If there is a nested combinator it is pointed to here
-            child?: StringCombinator
+            children: StringCombinator[]
 
             constructor(
                 combinator: string,
                 strings: Lexer.Token[],
-                child?: StringCombinator
+                children: StringCombinator[] = []
             ) {
                 this.combinator = combinator;
                 this.strings = strings.map(s => s.value);
-                this.child = child;
+                this.children = children;
             }
         }
 
@@ -193,6 +193,64 @@ namespace Bart {
             return [tokens.slice(0, i), tokens.slice(i)];
         }
 
+        // TODO
+        export function isStringCombinatorSequence(tokens: Lexer.Token[]): boolean {
+            if (tokens.length == 0) {
+                return false;
+            }
+
+            // First case, implicit '&'
+            return Lexer.isString(tokens[0].value) 
+                || (Lexer.isCombinator(tokens[0].value) && Lexer.isString(tokens[1].value));
+        }
+
+        export function isStringNegationSequence(tokens: Lexer.Token[]): boolean {
+            if (tokens.length < 2) {
+                return false;
+            }
+
+            return tokens[0].value == '!' && Lexer.isString(tokens[1].value);
+        }
+
+        // TODO
+        export function consumeStringNegation(
+            tokens: Lexer.Token[]
+        ): [result: StringCombinator, remaining: Lexer.Token[]] {
+            let negatedString = tokens[1];
+            return [new StringCombinator('!', [negatedString], []), tokens.slice(2) ];
+        }
+
+        // TODO
+        export function consumeStringCombinator(
+            tokens: Lexer.Token[]
+        ): [result: StringCombinator, remaining: Lexer.Token[]] {
+            // TODO: Should handle implicit '&' case
+            let combinator = new StringCombinator(tokens[0].value, [], []);
+            tokens = tokens.slice(1);
+
+            // Iterate tokens here and identify.
+            while (tokens.length > 0) {
+                if (isStringNegationSequence(tokens)) {
+                    // consume, update `tokens` here
+                    let [childCombinator, remainder] = consumeStringNegation(tokens);
+                    tokens = remainder;
+                    combinator.children.push(childCombinator);
+                } else if (Lexer.isString(tokens[0].value)) {
+                    combinator.strings.push(tokens[0].value);
+                    tokens = tokens.slice(1);
+                } else if (isStringCombinatorSequence(tokens)) {
+                    let [childCombinator, remainder] = consumeStringCombinator(tokens);
+                    tokens = remainder;
+                    combinator.children.push(childCombinator);
+                } else {
+                    // Parse error?
+                }
+            }
+
+            // TODO
+            return [combinator, []];
+        }
+
         export function parseStringCombinator(
             tokens: Bart.Lexer.Token[]
         ): [result: StringCombinator, remainingTokens: Bart.Lexer.Token[]] {
@@ -201,11 +259,16 @@ namespace Bart {
 
             // TODO: Handle nested combinator
             // (Important to verify it's a string combinator, not filter combinator)
+
+
+
             let combinator = '&';
             if (Lexer.isCombinator(tokens[0].value)) {
                 combinator = tokens[0].value;
                 tokens = tokens.slice(1);
             }
+
+            // Known at this point that it's a string combinator; go from here
 
             let [consumed, remaining] = consume(
                 tokens,
