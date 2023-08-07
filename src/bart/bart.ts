@@ -48,7 +48,8 @@ namespace Bart {
 
         export enum TokenType {
             StringArg,
-            Filter
+            Filter,
+            Negation
         }
 
         export function isString(token: string): boolean {
@@ -57,6 +58,10 @@ namespace Bart {
 
         export function isFilter(token: string): boolean {
             return [ 'title', 'url' ].includes(token);
+        }
+
+        export function isNegation(token: string): boolean {
+            return token == '!';
         }
 
         export function tokenize(input: string): string[] {
@@ -136,6 +141,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.StringArg, token));
                 } else if (Bart.Lexer.isFilter(token)) {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Filter, token));
+                } else if (Bart.Lexer.isNegation(token)) {
+                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Negation, token));
                 }
             }
 
