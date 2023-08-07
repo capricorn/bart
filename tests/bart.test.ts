@@ -79,3 +79,13 @@ test('Test parse string combinator', () => {
     expect(combinator.combinator).toBe('|');
     expect(combinator.strings).toEqual(['"xyz"', '"ijk"']);
 });
+
+test('Implicit "&" StringCombinator when parsing single string', () => {
+    let tokens = [
+        new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.StringArg, '"ijk"')
+    ];
+
+    let [combinator, remainder] = Bart.Parser.parseStringCombinator(tokens);
+    expect(combinator.combinator).toBe('&');
+    expect(combinator.strings).toEqual(['"ijk"']);
+});
