@@ -154,3 +154,12 @@ test('prettyprint filter', () => {
     expect(filterCombinator.filters.length == 1);
     console.log(filterCombinator.filters[0].print());
 });
+
+test('prettyprint filter combinator', () => {
+    let query = '| title "xyz" url "abc"';
+    let lex = Bart.Lexer.lex(query);
+
+    let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex);
+
+    console.log(filterCombinator.print());
+});

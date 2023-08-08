@@ -212,7 +212,7 @@ namespace Bart {
             }
         }
 
-        export class FilterCombinator {
+        export class FilterCombinator extends PrettyPrint {
             combinator: string
             filters: Filter[]
             child?: FilterCombinator
@@ -222,9 +222,21 @@ namespace Bart {
                 filters: Filter[],
                 child?: FilterCombinator
             ) {
+                super();
                 this.combinator = combinator;
                 this.filters = filters;
                 this.child = child;
+            }
+
+            print(): string {
+                let result = `<span class="bart-combinator">${this.combinator}</span>` 
+                    + ' ' + this.filters.map(f => f.print()).join(' ');
+
+                if (this.child != undefined) {
+                    result += this.child.print();
+                }
+
+                return result;
             }
         }
 
