@@ -162,8 +162,12 @@ namespace Bart {
         */
     }
 
+    export abstract class PrettyPrint {
+        abstract print(): string;
+    }
+
     export namespace Parser {
-        export class StringCombinator {
+        export class StringCombinator extends PrettyPrint {
             combinator: string
             strings: string[]
             // If there is a nested combinator it is pointed to here
@@ -174,9 +178,18 @@ namespace Bart {
                 strings: Lexer.Token[],
                 children: StringCombinator[] = []
             ) {
+                super();
                 this.combinator = combinator;
                 this.strings = strings.map(s => s.value);
                 this.children = children;
+            }
+
+            print(): string {
+                let result = `<span class="bart-combinator">${this.combinator}</span>` +
+                    ' ' + '<span class="bart-string">' + this.strings.join(' ') + '</span>'
+                    + ' ' + this.children.map(c => c.print()).join(' ');
+
+                return result;
             }
         }
 
@@ -335,6 +348,9 @@ namespace Bart {
             tokens: Bart.Lexer.Token[]
         ): [result: StringCombinator, remainingTokens: Bart.Lexer.Token[]] {
             return consumeStringCombinator(tokens);
+        }
+
+        export function highlight(root: FilterCombinator) {
         }
     }
 } 

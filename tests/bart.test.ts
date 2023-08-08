@@ -135,3 +135,13 @@ test('Consume compound filter test', () => {
     expect(filterCombinator.filters[0].arg.strings).toEqual(['"xyz"']);
     expect(filterCombinator.filters[1].arg.strings).toEqual(['"abc"']);
 });
+
+test('Prettyprint string combinator', () => {
+    let lex = Bart.Lexer.lex('& "xyz" ! "ijk"');
+    let [stringCombinator, _] = Bart.Parser.consumeStringCombinator(lex)
+    //let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex);
+
+    console.log(stringCombinator.print());
+    //expect(stringCombinator.print).toBe();
+    //console.log(filterCombinator);
+});
