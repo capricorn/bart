@@ -193,7 +193,7 @@ namespace Bart {
             }
         }
 
-        export class Filter {
+        export class Filter extends PrettyPrint {
             type: string
             arg: StringCombinator
 
@@ -201,8 +201,14 @@ namespace Bart {
                 type: string,
                 arg: StringCombinator
             ) {
+                super();
                 this.type = type;
                 this.arg = arg;
+            }
+
+            print(): string {
+                return `<span class="bart-filter">${this.type}</span>` +
+                    ' ' + this.arg.print();
             }
         }
 

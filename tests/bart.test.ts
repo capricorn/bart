@@ -145,3 +145,12 @@ test('Prettyprint string combinator', () => {
     //expect(stringCombinator.print).toBe();
     //console.log(filterCombinator);
 });
+
+test('prettyprint filter', () => {
+    let lex = Bart.Lexer.lex('url "xyz" "ijk"');
+
+    let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex)
+
+    expect(filterCombinator.filters.length == 1);
+    console.log(filterCombinator.filters[0].print());
+});
