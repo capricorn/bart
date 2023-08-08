@@ -180,6 +180,35 @@ namespace Bart {
             }
         }
 
+        export class Filter {
+            type: string
+            arg: StringCombinator
+
+            constructor(
+                type: string,
+                arg: StringCombinator
+            ) {
+                this.type = type;
+                this.arg = arg;
+            }
+        }
+
+        export class FilterCombinator {
+            combinator: string
+            filters: Filter[]
+            child?: FilterCombinator
+
+            constructor(
+                combinator: string,
+                filters: Filter[],
+                child?: FilterCombinator
+            ) {
+                this.combinator = combinator;
+                this.filters = filters;
+                this.child = child;
+            }
+        }
+
         export function consume(
             tokens: Bart.Lexer.Token[],
             predicate: (token: Bart.Lexer.Token) => boolean
@@ -210,6 +239,10 @@ namespace Bart {
             }
 
             return tokens[0].value == '!' && Lexer.isString(tokens[1].value);
+        }
+
+        export function isFilterCombinatorSequence(tokens: Lexer.Token[]): boolean {
+            return Lexer.isCombinator(tokens[0].value) && Lexer.isFilter(tokens[1].value);
         }
 
         // TODO
@@ -245,10 +278,57 @@ namespace Bart {
                     combinator.children.push(childCombinator);
                 } else {
                     // Parse error?
+                    break;
                 }
             }
 
             return [combinator, tokens];
+        }
+
+        export function consumeFilterCombinator(
+            tokens: Lexer.Token[]
+        ): [result: FilterCombinator, remainingTokens: Lexer.Token[] ] {
+            // Everything left-to-right (starts from the filter)
+
+            let combinatorType = '&';
+            if (Lexer.isCombinator(tokens[0].value)) {
+                combinatorType = tokens[0].value;
+                tokens = tokens.slice(1);
+            }
+
+            console.log('remaining tokens: ' + tokens);
+
+            let filters: Filter[] = [];
+            let childCombinator: FilterCombinator = undefined;
+
+            while (tokens.length > 0) {
+                console.log(tokens);
+                console.log(tokens[0].value);
+                // On each iteration, check if combinator or filter and set tokens after.
+                if (Lexer.isFilter(tokens[0].value)) {
+                    console.log('handling filter: ' + tokens[0].value);
+                    let filterType = tokens[0].value;
+                    tokens = tokens.slice(1);
+
+                    // Consume filter args; loop until all filters are consumed.
+                    // Stuck here
+                    let [filterArg, remainder] = consumeStringCombinator(tokens);
+                    tokens = remainder;
+                    console.log('filter remaining tokens: ' + tokens[0]);
+                    filters.push(new Filter(filterType, filterArg));
+                } else if (isFilterCombinatorSequence(tokens)) {
+                    let [filterCombinator, remainder] = consumeFilterCombinator(tokens);
+                    filterCombinator.child = filterCombinator;
+                    // Should have consumed all tokens here
+                    tokens = remainder;
+                    break;
+                } else {
+                    // TODO: Parse error
+                }
+            }
+
+            // TODO
+            return [ new FilterCombinator(combinatorType, filters, childCombinator), [] ];
         }
 
         export function parseStringCombinator(

@@ -105,3 +105,33 @@ test('Consume complex string combinator', () => {
     expect(nestedCombinator.combinator).toBe('|');
     expect(nestedCombinator.strings).toEqual(['"ijk"', '"ooo"']);
 });
+
+test('Consume filter test', () => {
+    let query = 'title | "xyz" "ijk"';
+    let lex = Bart.Lexer.lex(query);
+
+    let [filterCombinator, remainder ] = Bart.Parser.consumeFilterCombinator(lex);
+
+    expect(filterCombinator.combinator).toBe('&');
+    expect(filterCombinator.filters.length).toBe(1);
+
+    let filter = filterCombinator.filters[0];
+    let filterArg = filter.arg;
+
+    expect(filter.type).toBe('title');
+    expect(filterArg.combinator).toBe('|');
+    expect(filterArg.strings).toEqual(['"xyz"', '"ijk"']);
+});
+
+test('Consume compound filter test', () => {
+    let query = '| title "xyz" url "abc"'
+    let lex = Bart.Lexer.lex(query);
+
+    let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex);
+
+    expect(filterCombinator.combinator).toBe('|');
+    expect(filterCombinator.filters[0].type).toBe('title');
+    expect(filterCombinator.filters[1].type).toBe('url');
+    expect(filterCombinator.filters[0].arg.strings).toEqual(['"xyz"']);
+    expect(filterCombinator.filters[1].arg.strings).toEqual(['"abc"']);
+});
