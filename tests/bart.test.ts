@@ -177,3 +177,21 @@ test('Test StringCombinator filter', () => {
     expect(filter('"ijk"')).toBe(true);
     expect(filter('"abc"')).toBe(false);
 });
+
+test('Test Filter filter', () => {
+    let query = 'title | "xyz" "abc"';
+    let lex = Bart.Lexer.lex(query);
+
+    let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex);
+    let filter = filterCombinator.filters[0].filter();
+
+
+    let tabs = [
+        new Bart.DummyTab('"xyz"', ''),
+        new Bart.DummyTab('"ijk"', '')
+    ];
+
+    let results = tabs.filter(t => filter(t));
+    expect(results.length).toBe(1);
+    expect(results[0].title).toBe('"xyz"');
+});

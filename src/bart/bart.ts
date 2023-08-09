@@ -25,6 +25,16 @@ namespace Bart {
         url: string
     }
 
+    export class DummyTab implements Tab {
+        title: string
+        url: string
+
+        constructor(title: string, url: string) {
+            this.title = title;
+            this.url = url;
+        }
+    }
+
     export type TabFilter = (tab: Tab) => boolean;
     export type StringFilter = (str: string) => boolean;
 
@@ -243,6 +253,11 @@ namespace Bart {
             print(): string {
                 return `<span class="bart-filter">${this.type}</span>` +
                     ' ' + this.arg.print();
+            }
+
+            filter(): TabFilter {
+                let stringFilter = this.arg.filter();
+                return (tab: Tab) => { return stringFilter(tab[this.type]) };
             }
         }
 
