@@ -440,6 +440,13 @@ namespace Bart {
 
         export function highlight(root: FilterCombinator) {
         }
+
+        export function parse(input: string): FilterCombinator {
+            let tokens = Lexer.lex(input);
+            let [combinator, _] = consumeFilterCombinator(tokens);
+
+            return combinator;
+        }
     }
 
     export namespace Interpreter {
