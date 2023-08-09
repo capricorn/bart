@@ -287,6 +287,27 @@ namespace Bart {
 
                 return result;
             }
+
+            filter(): TabFilter {
+                return (tab: Tab) => {
+                    if (this.combinator == '&') {
+                        // A tab must match all filters
+                        let filters = this.filters.map(f => f.filter());
+                        // TODO: Handle child filter
+                        let childResult = true;
+                        if (this.child) {
+                            let childFilter = this.child.filter();
+                            childResult = childFilter(tab);
+                        }
+
+                        return filters.map(f => f(tab)).every(result => result) && childResult;
+                    } else if (this.combinator == '|') {
+
+                    } else {
+                        // TODO: interpret error
+                    }
+                }
+            }
         }
 
         export function consume(

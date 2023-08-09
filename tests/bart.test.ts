@@ -195,3 +195,21 @@ test('Test Filter filter', () => {
     expect(results.length).toBe(1);
     expect(results[0].title).toBe('"xyz"');
 });
+
+test('Test FilterCombinator filter', () => {
+    let query = 'url "abc" title "xyz"';
+    let lex = Bart.Lexer.lex(query);
+
+    let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex);
+    let filter = filterCombinator.filter();
+
+    let tabs = [
+        new Bart.DummyTab('"xyz"', '"abc"'),
+        new Bart.DummyTab('"ijk"', '')
+    ];
+
+    let results = tabs.filter(t => filter(t));
+    expect(results.length).toBe(1);
+    expect(results[0].title).toBe('"xyz"');
+    expect(results[0].url).toBe('"abc"');
+});
