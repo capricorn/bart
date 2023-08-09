@@ -163,3 +163,17 @@ test('prettyprint filter combinator', () => {
 
     console.log(filterCombinator.print());
 });
+
+test('Test StringCombinator filter', () => {
+    let query = '| "xyz" ! "abc"';
+    let lex = Bart.Lexer.lex(query);
+
+    let [stringCombinator, _] = Bart.Parser.consumeStringCombinator(lex);
+
+    let filter: Bart.StringFilter = stringCombinator.filter();
+
+    expect(stringCombinator.combinator == '|');
+    expect(filter('"xyz"')).toBe(true);
+    expect(filter('"ijk"')).toBe(true);
+    expect(filter('"abc"')).toBe(false);
+});

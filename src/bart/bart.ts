@@ -20,6 +20,14 @@
 // First step: tokenize
 
 namespace Bart {
+    export interface Tab {
+        title: string
+        url: string
+    }
+
+    export type TabFilter = (tab: Tab) => boolean;
+    export type StringFilter = (str: string) => boolean;
+
     export namespace Lexer {
         export class Token {
             start: number;
@@ -190,6 +198,32 @@ namespace Bart {
                     + ' ' + this.children.map(c => c.print()).join(' ');
 
                 return result;
+            }
+
+            filter(): StringFilter {
+                let stringMatcher: StringFilter = (str: string) => {
+                    // **TODO: Handle children as part of matches as well**
+                    let matches = this.strings.map(s => s.includes(str))
+
+                    // Negation can _only_ bind to a single string
+                    if (this.combinator == '!') {
+                        return !this.strings[0].includes(str);
+                    }
+
+                    for (const child of this.children) {
+                        let filter = child.filter();
+                        matches.push(filter(str));
+                    }
+
+                    if (this.combinator == '&') {
+                        return matches.every(a => a);
+                    } else {
+                        // '|' combinator
+                        return matches.some(a => a);
+                    }
+                };
+
+                return stringMatcher;
             }
         }
 
@@ -370,6 +404,13 @@ namespace Bart {
 
         export function highlight(root: FilterCombinator) {
         }
+    }
+
+    export namespace Interpreter {
+        /*
+        export function interpretStringCombinator(): TypeFilter {
+        }
+        */
     }
 } 
 
