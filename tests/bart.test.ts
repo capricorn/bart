@@ -213,3 +213,35 @@ test('Test FilterCombinator filter', () => {
     expect(results[0].title).toBe('"xyz"');
     expect(results[0].url).toBe('"abc"');
 });
+
+test('Test bart interpreter', () => {
+    //let query = '| url ! "xyz" ! "ijk" title "rst"';
+    let query = '| url ! "xyz" title "rst"';
+    //let query = '| url "xyz" title "rst"';
+
+    let tabs = [
+        // title, url
+        new Bart.DummyTab('"xyz"', ' '),    // matches
+        new Bart.DummyTab('"rst"', ' '),  // matches
+        new Bart.DummyTab('"123"', '"xyz"')  // no match
+    ];
+
+    let results = Bart.Interpreter.interpret(query, tabs);
+    expect(results.length).toBe(2);
+
+});
+
+test('Test string negation', () => {
+    let query = 'url ! "xyz"';
+
+    let tabs = [
+        // title, url
+        new Bart.DummyTab('"xyz"', ' '),
+        new Bart.DummyTab('', '"xyz"'),
+    ];
+
+    //console.log('title: ' + tabs[0]['title']);
+    let results = Bart.Interpreter.interpret(query, tabs);
+
+    expect(results.length).toBe(1);
+});

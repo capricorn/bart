@@ -217,6 +217,7 @@ namespace Bart {
 
                     // Negation can _only_ bind to a single string
                     if (this.combinator == '!') {
+                        console.log('String combinator negation: ' + this.strings);
                         return !this.strings[0].includes(str);
                     }
 
@@ -290,21 +291,21 @@ namespace Bart {
 
             filter(): TabFilter {
                 return (tab: Tab) => {
-                    if (this.combinator == '&') {
-                        // A tab must match all filters
-                        let filters = this.filters.map(f => f.filter());
-                        // TODO: Handle child filter
-                        let childResult = true;
-                        if (this.child) {
-                            let childFilter = this.child.filter();
-                            childResult = childFilter(tab);
-                        }
+                    // A tab must match all filters
+                    let filters = this.filters.map(f => f.filter());
+                    // TODO: Handle child filter
+                    let childResult = this.combinator == '&';   // false for '|' case 
+                    if (this.child) {
+                        let childFilter = this.child.filter();
+                        childResult = childFilter(tab);
+                    }
 
+                    if (this.combinator == '&') {
                         return filters.map(f => f(tab)).every(result => result) && childResult;
                     } else if (this.combinator == '|') {
-
+                        return filters.map(f => f(tab)).some(result => result) || childResult;
                     } else {
-                        // TODO: interpret error
+                        // Interpret error (should be impossible..)
                     }
                 }
             }
@@ -450,10 +451,14 @@ namespace Bart {
     }
 
     export namespace Interpreter {
-        /*
-        export function interpretStringCombinator(): TypeFilter {
+        export function interpret(input: string, tabs: Tab[]): Tab[] {
+            let ast = Parser.parse(input);
+            console.log('==FILTER==');
+            console.dir(ast, { depth:  null });
+            let filter = ast.filter();
+
+            return tabs.filter(tab => filter(tab));
         }
-        */
     }
 } 
 
