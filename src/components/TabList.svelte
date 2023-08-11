@@ -9,6 +9,7 @@
     let metaKeyPressed = false;
     let shiftKeyPressed = false;
     let hoveredTab: Tab = undefined;
+    let bartFilterInput = '';
 
     // TODO: A better default?
     let groupBySelection = "";
@@ -181,6 +182,10 @@
 <div class="container" >
     <div id="control-header">
         <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected</h1>
+        <div>
+            <label for="bart-filter">Filter</label>
+            <input type="text" id="bart-filter" bind:value={bartFilterInput}/>
+        </div>
         <div>
             <label for="group-select">Group by</label>
             <select name="group-by" id="group-select" bind:value={groupBySelection}>
