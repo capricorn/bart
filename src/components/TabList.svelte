@@ -23,8 +23,16 @@
 
     let filteredTabs = tabs;
 
+    function parseAST(input: string): Bart.Parser.FilterCombinator {
+        try {
+            return Bart.Parser.parse(input);
+        } catch (error) {
+            return new Bart.Parser.MatchAllFilterCombinator();
+        }
+    }
+
     // TODO: Handle parse error
-    $: ast = Bart.Parser.parse(bartFilterInput);
+    $: ast = parseAST(bartFilterInput);
     $: console.dir(ast, { depth: null });
 
     $: {
