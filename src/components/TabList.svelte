@@ -25,6 +25,7 @@
 
     // TODO: Handle parse error
     $: ast = Bart.Parser.parse(bartFilterInput);
+    $: console.dir(ast, { depth: null });
 
     $: {
         console.log('updating filter: ' + groupBySelection);
