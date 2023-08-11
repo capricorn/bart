@@ -245,3 +245,16 @@ test('Test string negation', () => {
 
     expect(results.length).toBe(1);
 });
+
+test('Test parse errors', () => {
+    let parseErrors = [
+        '"xyz"',    // no filter provided
+        'ur',    // incomplete,
+        '| title "df',   // unterminated string
+        '| title',   // unterminated string
+    ];
+
+    for (const error of parseErrors) {
+        expect(() => Bart.Parser.parse(error)).toThrow(Bart.Parser.ParseError);
+    }
+});

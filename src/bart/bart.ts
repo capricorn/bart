@@ -88,32 +88,6 @@ namespace Bart {
         }
 
         export function tokenize(input: string): string[] {
-            /*
-            function transition(symbol: string, state?: TokenState): TokenState {
-                switch (state as TokenState) {
-                    case TokenState.TOKEN:
-                        break;
-                    case TokenState.QUOTE:
-                        break;
-                    case TokenState.WHITESPACE:
-                        break;
-                    case undefined:
-                        if (symbol == "\"") {
-                            return TokenState.QUOTE;
-                        } else if (symbol == " ") {
-                            return TokenState.WHITESPACE;
-                        } else {
-                            return TokenState.TOKEN;
-                        }
-                }
-                // TODO: Remove
-                return TokenState.QUOTE;
-            }
-            */
-
-            // Simple state machine: 
-            // - must track token start
-            // - have to account for quotes
             var tokenStart = 0;
             var tokenState: TokenState = undefined;
             var tokens: string[] = [];
@@ -168,6 +142,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Negation, token));
                 } else if (Bart.Lexer.isCombinator(token)) {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Combinator, token));
+                } else {
+                    throw new Parser.ParseError();
                 }
             }
 
@@ -185,6 +161,8 @@ namespace Bart {
     }
 
     export namespace Parser {
+        export class ParseError extends Error {}
+
         export class StringCombinator extends PrettyPrint {
             combinator: string
             strings: string[]
@@ -391,7 +369,6 @@ namespace Bart {
             tokens: Lexer.Token[]
         ): [result: FilterCombinator, remainingTokens: Lexer.Token[] ] {
             // Everything left-to-right (starts from the filter)
-
             let combinatorType = '&';
             if (Lexer.isCombinator(tokens[0].value)) {
                 combinatorType = tokens[0].value;
@@ -412,6 +389,10 @@ namespace Bart {
                     let filterType = tokens[0].value;
                     tokens = tokens.slice(1);
 
+                    if (tokens.length == 0) {
+                        throw new ParseError();
+                    }
+
                     // Consume filter args; loop until all filters are consumed.
                     // Stuck here
                     let [filterArg, remainder] = consumeStringCombinator(tokens);
@@ -425,7 +406,7 @@ namespace Bart {
                     tokens = remainder;
                     break;
                 } else {
-                    // TODO: Parse error
+                    throw new ParseError();
                 }
             }
 
