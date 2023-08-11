@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import * as _ from "lodash";
+    import { Bart } from "src/bart/bart";
 
     type Tab = chrome.tabs.Tab;
 
@@ -21,6 +22,9 @@
     let tabRegionEnd: Tab = undefined;
 
     let filteredTabs = tabs;
+
+    // TODO: Handle parse error
+    $: ast = Bart.Parser.parse(bartFilterInput);
 
     $: {
         console.log('updating filter: ' + groupBySelection);

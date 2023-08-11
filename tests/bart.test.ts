@@ -258,3 +258,17 @@ test('Test parse errors', () => {
         expect(() => Bart.Parser.parse(error)).toThrow(Bart.Parser.ParseError);
     }
 });
+
+test('Test match all combinator (empty string program)', () => {
+    let tabs = [
+        // title, url
+        new Bart.DummyTab('"xyz"', ' '),
+        new Bart.DummyTab('"rst"', ' '),
+        new Bart.DummyTab('"123"', '"xyz"')
+    ];
+
+    let ast = Bart.Parser.parse('');
+    let filter = ast.filter();
+
+    expect(tabs.filter(tab => filter(tab)).length).toBe(3);
+});

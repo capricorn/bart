@@ -289,6 +289,16 @@ namespace Bart {
             }
         }
 
+        export class MatchAllFilterCombinator extends FilterCombinator {
+            constructor() {
+                super('', []);
+            }
+
+            override filter(): TabFilter {
+                return (tab) => true;
+            }
+        }
+
         export function consume(
             tokens: Bart.Lexer.Token[],
             predicate: (token: Bart.Lexer.Token) => boolean
@@ -424,6 +434,10 @@ namespace Bart {
         }
 
         export function parse(input: string): FilterCombinator {
+            if (input == '') {
+                return new MatchAllFilterCombinator();
+            }
+
             let tokens = Lexer.lex(input);
             let [combinator, _] = consumeFilterCombinator(tokens);
 
