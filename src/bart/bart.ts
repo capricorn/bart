@@ -191,12 +191,13 @@ namespace Bart {
             filter(): StringFilter {
                 let stringMatcher: StringFilter = (str: string) => {
                     // **TODO: Handle children as part of matches as well**
-                    let matches = this.strings.map(s => str.includes(s.slice(1,-1)))
+                    str = str.toLowerCase();
+                    let matches = this.strings.map(s => str.includes(s.toLowerCase().slice(1,-1)))
 
                     // Negation can _only_ bind to a single string
                     if (this.combinator == '!') {
                         console.log('String combinator negation: ' + this.strings);
-                        return !str.includes(this.strings[0].slice(1,-1));
+                        return !str.includes(this.strings[0].toLowerCase().slice(1,-1));
                     }
 
                     for (const child of this.children) {
