@@ -34,7 +34,16 @@
     // TODO: Handle parse error
     $: ast = parseAST(bartFilterInput);
     $: console.dir(ast, { depth: null });
+    $: {
+        console.dir(ast, { depth: null })
+        let filter = ast.filter();
+        for (const tab of tabs) {
+            console.log('"google.com"'.includes(tab['url']));
+        }
+        filteredTabs = tabs.filter(filter);
+    }
 
+    /*
     $: {
         console.log('updating filter: ' + groupBySelection);
         console.log(groupBySelection);
@@ -49,6 +58,7 @@
             console.log(filteredTabs.map(f => new URL(f.url).hostname));
         }
     }
+    */
 
     $: selections = Array.from(selectedTabIds).sort()
     $: {
