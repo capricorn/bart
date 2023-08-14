@@ -204,10 +204,13 @@
 
 <div class="container" >
     <div id="control-header">
-        <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected</h1>
+        <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected | {filteredTabs.length} filtered</h1>
         <div>
             <label for="bart-filter">Filter</label>
             <input type="text" id="bart-filter" bind:value={bartFilterInput}/>
+        </div>
+        <div id="bart-prettyprint">
+            {@html ast.print()}
         </div>
         <div>
             <label for="group-select">Group by</label>
@@ -280,5 +283,24 @@
         display: block;
         padding-bottom: 16px;
         user-select: none;
+    }
+
+
+    /* Prettyprint styling */
+    #bart-prettyprint {
+        font-family: monospace;
+        font-size: 16px;
+    }
+
+    :global(.bart-filter) {
+        color: purple;
+    }
+
+    :global(.bart-combinator) {
+        color: black;
+    }
+
+    :global(.bart-string) {
+        color: green;
     }
 </style>
