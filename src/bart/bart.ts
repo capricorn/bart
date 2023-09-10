@@ -23,19 +23,30 @@ namespace Bart {
     export interface Tab {
         title: string
         url: string
+        windowId: number
+    }
+
+    export interface Context {
+        currentWindowId: number
+    }
+
+    export class TabContext implements Context {
+        currentWindowId: number
     }
 
     export class DummyTab implements Tab {
         title: string
         url: string
+        windowId: number
 
-        constructor(title: string, url: string) {
+        constructor(title: string, url: string, windowId: number = 0) {
             this.title = title;
             this.url = url;
+            this.windowId = windowId;
         }
     }
 
-    export type TabFilter = (tab: Tab) => boolean;
+    export type TabFilter = (tab: Tab, context: Context) => boolean;
     export type StringFilter = (str: string) => boolean;
 
     export namespace Lexer {
@@ -76,7 +87,7 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url' ].includes(token);
+            return [ 'title', 'url', 'curr' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -235,9 +246,15 @@ namespace Bart {
                     ' ' + this.arg.print();
             }
 
-            filter(): TabFilter {
-                let stringFilter = this.arg.filter();
-                return (tab: Tab) => { return stringFilter(tab[this.type]) };
+            filter(context: Context): TabFilter {
+                // TODO: Reference enum of defined types..? (Somewhat ugly in TS?) 
+                switch (this.type) {
+                    case 'curr':
+                        return (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
+                    default:
+                        let stringFilter = this.arg.filter();
+                        return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]) };
+                }
             }
         }
 
@@ -269,20 +286,20 @@ namespace Bart {
             }
 
             filter(): TabFilter {
-                return (tab: Tab) => {
+                return (tab: Tab, context: Context) => {
                     // A tab must match all filters
-                    let filters = this.filters.map(f => f.filter());
+                    let filters = this.filters.map(f => f.filter(context));
                     // TODO: Handle child filter
                     let childResult = this.combinator == '&';   // false for '|' case 
                     if (this.child) {
                         let childFilter = this.child.filter();
-                        childResult = childFilter(tab);
+                        childResult = childFilter(tab, context);
                     }
 
                     if (this.combinator == '&') {
-                        return filters.map(f => f(tab)).every(result => result) && childResult;
+                        return filters.map(f => f(tab, context)).every(result => result) && childResult;
                     } else if (this.combinator == '|') {
-                        return filters.map(f => f(tab)).some(result => result) || childResult;
+                        return filters.map(f => f(tab, context)).some(result => result) || childResult;
                     } else {
                         // Interpret error (should be impossible..)
                     }
@@ -447,13 +464,13 @@ namespace Bart {
     }
 
     export namespace Interpreter {
-        export function interpret(input: string, tabs: Tab[]): Tab[] {
+        export function interpret(input: string, tabs: Tab[], context: Context): Tab[] {
             let ast = Parser.parse(input);
             console.log('==FILTER==');
             console.dir(ast, { depth:  null });
             let filter = ast.filter();
 
-            return tabs.filter(tab => filter(tab));
+            return tabs.filter(tab => filter(tab, context));
         }
     }
 } 

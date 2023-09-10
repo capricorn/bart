@@ -22,6 +22,7 @@
     let tabRegionEnd: Tab = undefined;
 
     let filteredTabs = tabs;
+    let bartContext = new Bart.TabContext();
 
     function parseAST(input: string): Bart.Parser.FilterCombinator {
         try {
@@ -197,6 +198,9 @@
 
     onMount(async () => {
         await fetchTabs();
+
+        let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        this.bartContext = tab.windowId;
     })
 </script>
 

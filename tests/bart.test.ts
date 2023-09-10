@@ -181,9 +181,10 @@ test('Test StringCombinator filter', () => {
 test('Test Filter filter', () => {
     let query = 'title | "xyz" "abc"';
     let lex = Bart.Lexer.lex(query);
+    let context = new Bart.TabContext();
 
     let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex);
-    let filter = filterCombinator.filters[0].filter();
+    let filter = filterCombinator.filters[0].filter(context);
 
 
     let tabs = [
@@ -191,7 +192,7 @@ test('Test Filter filter', () => {
         new Bart.DummyTab('"ijk"', '')
     ];
 
-    let results = tabs.filter(t => filter(t));
+    let results = tabs.filter(t => filter(t, context));
     expect(results.length).toBe(1);
     expect(results[0].title).toBe('"xyz"');
 });
@@ -199,6 +200,7 @@ test('Test Filter filter', () => {
 test('Test FilterCombinator filter', () => {
     let query = 'url "abc" title "xyz"';
     let lex = Bart.Lexer.lex(query);
+    let context = new Bart.TabContext();
 
     let [filterCombinator, _] = Bart.Parser.consumeFilterCombinator(lex);
     let filter = filterCombinator.filter();
@@ -208,7 +210,7 @@ test('Test FilterCombinator filter', () => {
         new Bart.DummyTab('"ijk"', '')
     ];
 
-    let results = tabs.filter(t => filter(t));
+    let results = tabs.filter(t => filter(t, context));
     expect(results.length).toBe(1);
     expect(results[0].title).toBe('"xyz"');
     expect(results[0].url).toBe('"abc"');
@@ -218,6 +220,7 @@ test('Test bart interpreter', () => {
     //let query = '| url ! "xyz" ! "ijk" title "rst"';
     let query = '| url ! "xyz" title "rst"';
     //let query = '| url "xyz" title "rst"';
+    let context = new Bart.TabContext();
 
     let tabs = [
         // title, url
@@ -226,13 +229,14 @@ test('Test bart interpreter', () => {
         new Bart.DummyTab('"123"', '"xyz"')  // no match
     ];
 
-    let results = Bart.Interpreter.interpret(query, tabs);
+    let results = Bart.Interpreter.interpret(query, tabs, context);
     expect(results.length).toBe(2);
 
 });
 
 test('Test string negation', () => {
     let query = 'url ! "xyz"';
+    let context = new Bart.TabContext();
 
     let tabs = [
         // title, url
@@ -241,7 +245,7 @@ test('Test string negation', () => {
     ];
 
     //console.log('title: ' + tabs[0]['title']);
-    let results = Bart.Interpreter.interpret(query, tabs);
+    let results = Bart.Interpreter.interpret(query, tabs, context);
 
     expect(results.length).toBe(1);
 });
@@ -259,6 +263,7 @@ test('Test parse errors', () => {
     }
 });
 
+// TODO: Fix
 test('Test match all combinator (empty string program)', () => {
     let tabs = [
         // title, url
@@ -267,8 +272,24 @@ test('Test match all combinator (empty string program)', () => {
         new Bart.DummyTab('"123"', '"xyz"')
     ];
 
+    let context = new Bart.TabContext();
     let ast = Bart.Parser.parse('');
     let filter = ast.filter();
 
-    expect(tabs.filter(tab => filter(tab)).length).toBe(3);
+    expect(tabs.filter(tab => filter(tab, context)).length).toBe(3);
+});
+
+test('Test "curr" filter', () => {
+    let context = new Bart.TabContext();
+
+    context.currentWindowId = 70;
+
+    let tabs = [
+        new Bart.DummyTab('"xyz"', ' ', 30),
+        new Bart.DummyTab('"rst"', ' ', 70),
+    ];
+
+    let filteredTabs = Bart.Interpreter.interpret('curr "xyz"', tabs, context);
+    expect(filteredTabs.length).toBe(1);
+    expect(filteredTabs[0].title).toBe('"rst"');
 });
