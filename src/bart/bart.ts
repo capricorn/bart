@@ -418,7 +418,8 @@ namespace Bart {
                     tokens = tokens.slice(1);
 
                     if (tokens.length == 0) {
-                        throw new ParseError();
+                        filters.push(new Filter(filterType, new StringCombinator('&', [])));
+                        continue;
                     }
 
                     // Consume filter args; loop until all filters are consumed.

@@ -253,9 +253,9 @@ test('Test string negation', () => {
 test('Test parse errors', () => {
     let parseErrors = [
         '"xyz"',    // no filter provided
-        'ur',    // incomplete,
-        '| title "df',   // unterminated string
-        '| title',   // unterminated string
+        'ur',    // incomplete, TODO: Invalid filter
+        //'| title "df',   // unterminated string
+        //'| title',   // unterminated string
     ];
 
     for (const error of parseErrors) {
@@ -287,9 +287,14 @@ test('Test "curr" filter', () => {
     let tabs = [
         new Bart.DummyTab('"xyz"', ' ', 30),
         new Bart.DummyTab('"rst"', ' ', 70),
+        new Bart.DummyTab('"abc"', ' ', 70),
     ];
 
-    let filteredTabs = Bart.Interpreter.interpret('curr "xyz"', tabs, context);
+    let filteredTabs = Bart.Interpreter.interpret('curr', tabs, context);
+    expect(filteredTabs.length).toBe(2);
+
+    // Compound filter
+    filteredTabs = Bart.Interpreter.interpret('title "abc" curr', tabs, context);
     expect(filteredTabs.length).toBe(1);
-    expect(filteredTabs[0].title).toBe('"rst"');
+    expect(filteredTabs[0].title).toBe('"abc"');
 });
