@@ -24,6 +24,10 @@
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
 
+    function executeBartCommand() {
+        ast.execute(filteredTabs);
+    }
+
     function parseAST(input: string): Bart.Parser.Command {
         try {
             return Bart.Parser.parse(input);
@@ -43,7 +47,6 @@
             console.log('"google.com"'.includes(tab['url']));
         }
         filteredTabs = tabs.filter(tab => filter(tab, bartContext));
-        ast.execute(filteredTabs);
     }
 
     /*
@@ -216,6 +219,7 @@
         <div>
             <label for="bart-filter">Filter</label>
             <input type="text" id="bart-filter" bind:value={bartFilterInput}/>
+            <button id="bart-execute-button" on:click={executeBartCommand}>Execute</button>
         </div>
         <div id="bart-prettyprint">
             {@html ast.filter.print()}
