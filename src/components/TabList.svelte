@@ -24,11 +24,12 @@
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
 
-    function parseAST(input: string): Bart.Parser.FilterCombinator {
+    function parseAST(input: string): Bart.Parser.Command {
         try {
             return Bart.Parser.parse(input);
         } catch (error) {
-            return new Bart.Parser.MatchAllFilterCombinator();
+            return Bart.Parser.Command.noop();
+            //return new Bart.Parser.MatchAllFilterCombinator();
         }
     }
 
@@ -37,11 +38,12 @@
     $: console.dir(ast, { depth: null });
     $: {
         console.dir(ast, { depth: null })
-        let filter = ast.filter();
+        let filter = ast.filter.filter();
         for (const tab of tabs) {
             console.log('"google.com"'.includes(tab['url']));
         }
         filteredTabs = tabs.filter(tab => filter(tab, bartContext));
+        ast.execute(filteredTabs);
     }
 
     /*
@@ -216,7 +218,7 @@
             <input type="text" id="bart-filter" bind:value={bartFilterInput}/>
         </div>
         <div id="bart-prettyprint">
-            {@html ast.print()}
+            {@html ast.filter.print()}
         </div>
         <div>
             <label for="group-select">Group by</label>

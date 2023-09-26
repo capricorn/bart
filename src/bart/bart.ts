@@ -30,6 +30,15 @@ namespace Bart {
         currentWindowId: number
     }
 
+    export class Browser {
+        // TODO: getter for 'Context'?
+
+        // TODO
+        bookmark() {
+
+        }
+    }
+
     export class TabContext implements Context {
         currentWindowId: number
     }
@@ -233,6 +242,13 @@ namespace Bart {
 
                 return stringMatcher;
             }
+
+            // A string combinator that always matches on any argument.
+            static get emptyCombinator(): StringCombinator {
+                // [].every(a => a) is true vacuously.
+                let combinator = new StringCombinator('&', []);
+                return combinator;
+            }
         }
 
         export class Filter extends PrettyPrint {
@@ -262,6 +278,10 @@ namespace Bart {
                         let stringFilter = this.arg.filter();
                         return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]) };
                 }
+            }
+
+            static get matchAllFilter(): FilterCombinator {
+                return new MatchAllFilterCombinator();
             }
         }
 
@@ -328,19 +348,40 @@ namespace Bart {
             type: string
             args: StringCombinator | undefined
             filter: FilterCombinator | undefined
-            // TODO: browserAPI. Necessary for mocking operations.
+            browser: Browser;
 
             constructor(
                 type: string,
                 args: StringCombinator | undefined,
                 filter: FilterCombinator | undefined,
+                browser: Browser = new Browser()
             ) {
                 this.type = type;
                 this.args = args;
                 this.filter = filter;
+                this.browser = browser;
             }
 
-            execute(tabs: Tab[]) {
+            // TODO: Filter the tabs here instead..? And then return them?
+            execute(filteredTabs: Tab[]) {
+                switch (this.type) {
+                    case '.':
+                        // Do nothing.
+                        console.log('noop, moving along.')
+                        break;
+                    case 'bm':
+                        console.log('Bookmarking filtered tabs');
+                        // TODO: Implement bookmarking
+                        break;
+                    default: 
+                        console.log('Attempting to execute unrecognized command: ' + this.type);
+                        break;
+                }
+            }
+
+            static noop(browser: Browser = new Browser()): Command {
+                let filter = new MatchAllFilterCombinator();
+                return new Command('.', StringCombinator.emptyCombinator, filter, browser);
             }
         }
 
@@ -479,16 +520,28 @@ namespace Bart {
         export function highlight(root: FilterCombinator) {
         }
 
-        export function parse(input: string): FilterCombinator {
+        export function parse(input: string): Command {
+            let command: Command = Command.noop();
+            let commandSymbol = command.type;
+            let commandArgs = StringCombinator.emptyCombinator;
+
             if (input == '') {
-                return new MatchAllFilterCombinator();
+                return command;
             }
 
             let tokens = Lexer.lex(input);
-            // TODO: Handle command here -- return 'Command' rather than 'FilterCombinator'
+
+            // TODO: Move to separate method
+            if (Bart.Lexer.isCommand(tokens[0].value)) {
+                commandSymbol = tokens[0].value;
+                tokens = tokens.slice(1);
+                // Consume any string args here
+                [commandArgs, tokens] = consumeStringCombinator(tokens);
+            }
+
             let [combinator, _] = consumeFilterCombinator(tokens);
 
-            return combinator;
+            return new Command(commandSymbol, commandArgs, combinator);
         }
     }
 
@@ -497,9 +550,13 @@ namespace Bart {
             let ast = Parser.parse(input);
             console.log('==FILTER==');
             console.dir(ast, { depth:  null });
-            let filter = ast.filter();
 
-            return tabs.filter(tab => filter(tab, context));
+            let filter = ast.filter.filter();
+            let filteredTabs = tabs.filter(tab => filter(tab, context));
+
+            ast.execute(filteredTabs);
+
+            return filteredTabs;
         }
     }
 } 
