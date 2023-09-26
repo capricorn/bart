@@ -79,7 +79,8 @@ namespace Bart {
             StringArg,
             Filter,
             Negation,
-            Combinator
+            Combinator,
+            Command
         }
 
         export function isString(token: string): boolean {
@@ -96,6 +97,10 @@ namespace Bart {
 
         export function isCombinator(token: string): boolean {
             return ['|', '&'].includes(token);
+        }
+
+        export function isCommand(token: string): boolean {
+            return ['.', 'bm'].includes(token);
         }
 
         export function tokenize(input: string): string[] {
@@ -153,6 +158,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Negation, token));
                 } else if (Bart.Lexer.isCombinator(token)) {
                     tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Combinator, token));
+                } else if (Bart.Lexer.isCommand(token)) {
+                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Command, token));
                 } else {
                     throw new Parser.ParseError();
                 }
@@ -317,6 +324,26 @@ namespace Bart {
             }
         }
 
+        export class Command {
+            type: string
+            args: StringCombinator | undefined
+            filter: FilterCombinator | undefined
+            // TODO: browserAPI. Necessary for mocking operations.
+
+            constructor(
+                type: string,
+                args: StringCombinator | undefined,
+                filter: FilterCombinator | undefined,
+            ) {
+                this.type = type;
+                this.args = args;
+                this.filter = filter;
+            }
+
+            execute(tabs: Tab[]) {
+            }
+        }
+
         export function consume(
             tokens: Bart.Lexer.Token[],
             predicate: (token: Bart.Lexer.Token) => boolean
@@ -458,6 +485,7 @@ namespace Bart {
             }
 
             let tokens = Lexer.lex(input);
+            // TODO: Handle command here -- return 'Command' rather than 'FilterCombinator'
             let [combinator, _] = consumeFilterCombinator(tokens);
 
             return combinator;
