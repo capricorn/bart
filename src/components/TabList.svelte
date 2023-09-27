@@ -223,7 +223,7 @@
             <button id="bart-execute-button" on:click={executeBartCommand}>Execute</button>
         </div>
         <div id="bart-prettyprint">
-            {@html ast.filter.print()}
+            {@html ast.print()}
         </div>
         <div>
             <label for="group-select">Group by</label>
@@ -315,5 +315,9 @@
 
     :global(.bart-string) {
         color: green;
+    }
+
+    :global(.bart-command) {
+        color: red;
     }
 </style>

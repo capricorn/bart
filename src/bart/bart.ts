@@ -354,7 +354,7 @@ namespace Bart {
             }
         }
 
-        export class Command {
+        export class Command extends Bart.PrettyPrint {
             type: string
             args: StringCombinator | undefined
             filter: FilterCombinator | undefined
@@ -366,10 +366,18 @@ namespace Bart {
                 filter: FilterCombinator | undefined,
                 browser: Browser = new Browser()
             ) {
+                super();
                 this.type = type;
                 this.args = args;
                 this.filter = filter;
                 this.browser = browser;
+            }
+
+            print(): string {
+                return `<span class="bart-command">${this.type}</span>` +
+                    (this.args?.strings?.length > 0 ? " " : "") +
+                    (this.args?.print() ?? "") +
+                    (this.filter?.print() ?? "");
             }
 
             // TODO: Filter the tabs here instead..? And then return them?
