@@ -551,9 +551,16 @@ namespace Bart {
                 [commandArgs, tokens] = consumeStringCombinator(tokens);
             }
 
-            let [combinator, _] = consumeFilterCombinator(tokens);
+            // A command w/out a filter assumes the match-all filter
+            let filterCombinator = Filter.matchAllFilter;
 
-            return new Command(commandSymbol, commandArgs, combinator);
+            if (tokens.length > 0) {
+                let [combinator, _] = consumeFilterCombinator(tokens);
+                filterCombinator = combinator;
+            }
+
+
+            return new Command(commandSymbol, commandArgs, filterCombinator);
         }
     }
 

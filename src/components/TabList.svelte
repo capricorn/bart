@@ -32,6 +32,7 @@
         try {
             return Bart.Parser.parse(input);
         } catch (error) {
+            console.log('Failed to parse AST');
             return Bart.Parser.Command.noop();
             //return new Bart.Parser.MatchAllFilterCombinator();
         }
