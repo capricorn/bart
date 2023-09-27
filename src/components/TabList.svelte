@@ -24,8 +24,8 @@
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
 
-    function executeBartCommand() {
-        ast.execute(filteredTabs);
+    async function executeBartCommand() {
+        await ast.execute(filteredTabs);
     }
 
     function parseAST(input: string): Bart.Parser.Command {

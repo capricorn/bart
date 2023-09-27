@@ -33,9 +33,15 @@ namespace Bart {
     export class Browser {
         // TODO: getter for 'Context'?
 
-        // TODO
-        bookmark() {
+        // TODO -- folder name optional
+        // TODO -- allow specification of folder hierarchy
+        async bookmark(tabs: Tab[], folderName: string) {
+            // Creates a folder in 'Other Bookmarks' by default
+            let folderNode = await chrome.bookmarks.create({ title: folderName });
 
+            for (const tab of tabs) {
+                await chrome.bookmarks.create({ title: tab.title, parentId: folderNode.id, url: tab.url });
+            }
         }
     }
 
@@ -249,6 +255,10 @@ namespace Bart {
                 let combinator = new StringCombinator('&', []);
                 return combinator;
             }
+
+            get quoteless(): string[] {
+                return this.strings.map(str => str.slice(1,-1));
+            }
         }
 
         export class Filter extends PrettyPrint {
@@ -363,7 +373,7 @@ namespace Bart {
             }
 
             // TODO: Filter the tabs here instead..? And then return them?
-            execute(filteredTabs: Tab[]) {
+            async execute(filteredTabs: Tab[]) {
                 switch (this.type) {
                     case '.':
                         // Do nothing.
@@ -371,6 +381,8 @@ namespace Bart {
                         break;
                     case 'bm':
                         console.log('Bookmarking filtered tabs');
+                        // Should take a single string argument
+                        await this.browser.bookmark(filteredTabs, this.args.quoteless[0]);
                         // TODO: Implement bookmarking
                         break;
                     default: 
