@@ -24,6 +24,12 @@
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
 
+    function focusFilter() {
+        console.log('Focusing filter div');
+        let element = document.getElementById('bart-filter');
+        element.focus({focusVisible: true});
+    }
+
     async function executeBartCommand() {
         await ast.execute(filteredTabs);
     }
@@ -95,13 +101,34 @@
         }
     }
 
+    function handleFilterInput(event: KeyboardEvent) {
+        console.log('receive filter input: ' + event);
+
+        // TODO: Accept printable characters; handle other cases
+        if (event.key == 'Backspace') {
+            bartFilterInput = bartFilterInput.slice(0, -1);
+        } else {
+            // TODO: Does this handle shift correctly..?
+            bartFilterInput += event.key;
+        }
+
+        console.log('filter input: ' + bartFilterInput);
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
-        if (event.key == 'Meta') {
-            console.log('meta down');
-            metaKeyPressed = true;
-        } else if (event.key == 'Shift') {
-            console.log('shift pressed');
-            shiftKeyPressed = true;
+        let focusedElement = window.document.activeElement;
+        console.log(focusedElement);
+
+        if (focusedElement.id == "bart-filter") {
+            handleFilterInput(event);
+        } else {
+            if (event.key == 'Meta') {
+                console.log('meta down');
+                metaKeyPressed = true;
+            } else if (event.key == 'Shift') {
+                console.log('shift pressed');
+                shiftKeyPressed = true;
+            }
         }
     }
 
@@ -219,7 +246,7 @@
         <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected | {filteredTabs.length} filtered</h1>
         <div>
             <label for="bart-filter">Filter</label>
-            <div contenteditable="true" id="bart-filter" bind:textContent={bartFilterInput}></div>
+            <div id="bart-filter" on:click={focusFilter} tabindex="0"></div>
             <button id="bart-execute-button" on:click={executeBartCommand}>Execute</button>
         </div>
         <div id="bart-prettyprint">
@@ -301,9 +328,19 @@
 
     #bart-filter {
         width: 250px;
+        height: 16px;
         font-family: monospace;
         font-size: 16px;
         display: inline-block;
+
+        border-width: 1px;
+        border-style: solid;
+    }
+
+    #bart-filter:focus {
+        border-width: 1px;
+        border-style: solid;
+        border-color: red;
     }
 
 
