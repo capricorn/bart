@@ -223,7 +223,8 @@
             <button id="bart-execute-button" on:click={executeBartCommand}>Execute</button>
         </div>
         <div id="bart-prettyprint">
-            {@html ast.print()}
+            <!-- {@html ast.print()} -->
+            {@html Bart.Lexer.highlight(bartFilterInput)}
         </div>
         <div>
             <label for="group-select">Group by</label>
@@ -300,6 +301,9 @@
 
     #bart-filter {
         width: 250px;
+        font-family: monospace;
+        font-size: 16px;
+        display: inline-block;
     }
 
 

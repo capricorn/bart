@@ -72,7 +72,9 @@ namespace Bart {
             value: string;
 
             constructor(
+                // Start of the lexical token in the string, inclusive.
                 start: number,
+                // End of the lexical token in the string, inclusive.
                 end: number,
                 type: TokenType,
                 value: string
@@ -80,6 +82,49 @@ namespace Bart {
                 this.start = start;
                 this.end = end;
                 this.type = type;
+                this.value = value;
+            }
+
+            get highlight(): string {
+                let bartClass = "bart-undefined";
+
+                switch (this.type) {
+                    case TokenType.StringArg:
+                        bartClass = "bart-string";
+                        break;
+                    case TokenType.Combinator:
+                        bartClass = "bart-combinator";
+                        break;
+                    case TokenType.Command:
+                        bartClass = "bart-command";
+                        break;
+                    case TokenType.Filter:
+                        bartClass = "bart-filter";
+                        break;
+                    case TokenType.Invalid:
+                        bartClass = "bart-invalid";
+                        break;
+                    case TokenType.Negation:
+                        bartClass = "bart-combinator";
+                        break;
+                }
+
+                return `<span class="${bartClass}">${this.value}</span>`
+            }
+        }
+
+        export class RawToken {
+            start: number;
+            end: number;
+            value: string;
+
+            constructor(
+                start: number,
+                end: number,
+                value: string
+            ) {
+                this.start = start;
+                this.end = end;
                 this.value = value;
             }
         }
@@ -91,6 +136,7 @@ namespace Bart {
         }
 
         export enum TokenType {
+            Invalid,
             StringArg,
             Filter,
             Negation,
@@ -118,40 +164,51 @@ namespace Bart {
             return ['.', 'bm'].includes(token);
         }
 
-        export function tokenize(input: string): string[] {
+        export function tokenize(input: string): RawToken[] {
             var tokenStart = 0;
             var tokenState: TokenState = undefined;
-            var tokens: string[] = [];
+            var tokens: RawToken[] = [];
+
+            console.log(`tokenize input: '${input}'`);
 
             for (var i = 0; i < input.length; i++) {
+                let token = input[i];
+                console.log(`token ${i}: '${token}' (whitespace: ${input.charAt(i) === " "})`)
                 // State is set for tracking the current parsing context
-                if (input[i] == '"') {
+                if (token == '"') {
+                    console.log("Hit quote");
                     if (tokenState == TokenState.QUOTE) {
                         // Quote closed; (TODO: Handle escapes?)
                         tokenState = undefined;
-                        tokens.push(input.slice(tokenStart, i+1));
+                        tokens.push(new RawToken(tokenStart, i, input.slice(tokenStart, i+1)));
                     } else {
                         tokenStart = i;
                         // Can ignore all other inputs
                         tokenState = TokenState.QUOTE;
                     }
-                } else if (input[i] == " ") {
+                } else if (token === " ") {
+                    console.log('lex: hit whitespace');
                     // Ignore whitespace
                     if (tokenState == TokenState.TOKEN) {
+                        console.log('terminating token');
                         // This delineates the end of the token sequence;
                         // slice the token here and return it.
-                        tokens.push(input.slice(tokenStart, i));
+                        tokens.push(new RawToken(tokenStart, i-1, input.slice(tokenStart, i)));
                         tokenState = undefined;
+                    } else {
+                        console.log('whitespace, skipping');
                     }
                 } else {
+                    console.log('token match');
                     if (tokenState == TokenState.QUOTE) {
                         continue;
                     } else if (tokenState == undefined) {
                         tokenStart = i;
                         tokenState = TokenState.TOKEN;
                     } else if (i == input.length-1) {
+                        console.log('End of string -- terminating');
                         // End of string -- this is the end of the token
-                        tokens.push(input.slice(tokenStart, i+1));
+                        tokens.push(new RawToken(tokenStart, i, input.slice(tokenStart, i+1)));
                     }
                 }
             }
@@ -159,34 +216,52 @@ namespace Bart {
             return tokens;
         }
 
-        export function lex(input: string) {
+        export function lex(input: string): Token[] {
+            console.log('lex input: ' + input);
             var tokenizedInput = Bart.Lexer.tokenize(input);
             var tokens: Bart.Lexer.Token[] = [];
 
             // TODO: start/end position included in `tokenize` output
             for (const token of tokenizedInput) {
-                if (Bart.Lexer.isString(token)) {
-                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.StringArg, token));
-                } else if (Bart.Lexer.isFilter(token)) {
-                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Filter, token));
-                } else if (Bart.Lexer.isNegation(token)) {
-                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Negation, token));
-                } else if (Bart.Lexer.isCombinator(token)) {
-                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Combinator, token));
-                } else if (Bart.Lexer.isCommand(token)) {
-                    tokens.push(new Bart.Lexer.Token(0, 0, Bart.Lexer.TokenType.Command, token));
+                if (Bart.Lexer.isString(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.StringArg, token.value));
+                } else if (Bart.Lexer.isFilter(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Filter, token.value));
+                } else if (Bart.Lexer.isNegation(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Negation, token.value));
+                } else if (Bart.Lexer.isCombinator(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Combinator, token.value));
+                } else if (Bart.Lexer.isCommand(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Command, token.value));
                 } else {
-                    throw new Parser.ParseError();
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
+                    //throw new Parser.ParseError();
                 }
             }
 
             return tokens;
         }
 
-        /*
-        export function lexString(token: string): BartString {
+        export function highlight(input: string): string {
+            let tokens: Token[] = lex(input);
+            console.log('highlight tokens: ');
+            console.log(tokens);
+            let highlight = "";
+
+            for (var i = 0; i < tokens.length; i++) {
+                highlight += tokens[i].highlight;
+                if (i < tokens.length-1) {
+                    highlight += "<span>";
+                    let spacePaddingCount = ((tokens[i+1].start - tokens[i].end) - 1);
+                    for (var j = 0; j < spacePaddingCount; j++) {
+                        highlight += " ";
+                    }
+                    highlight += "</span>";
+                }
+            }
+
+            return highlight;
         }
-        */
     }
 
     export abstract class PrettyPrint {
