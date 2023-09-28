@@ -118,7 +118,7 @@
         }
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = Bart.Lexer.highlight(bartFilterInput) + '<span>_</span>';
+        filterDiv.innerHTML = '<span>bart> </span>' + Bart.Lexer.highlight(bartFilterInput) + '<span>_</span>';
         console.log('filter input: ' + bartFilterInput);
     }
 
@@ -238,6 +238,9 @@
 
     onMount(async () => {
         bartContext = new Bart.TabContext();
+
+        let filterDiv = document.getElementById('bart-filter');
+        filterDiv.innerHTML = '<span>bart> </span>' + '<span>_</span>';
 
         await fetchTabs();
 
