@@ -185,6 +185,11 @@ namespace Bart {
                         tokenStart = i;
                         // Can ignore all other inputs
                         tokenState = TokenState.QUOTE;
+                        if (i == input.length-1) {
+                            console.log('End of string -- terminating');
+                            // End of string -- this is the end of the token
+                            tokens.push(new RawToken(tokenStart, i, input.slice(tokenStart, i+1)));
+                        }
                     }
                 } else if (token === " ") {
                     console.log('lex: hit whitespace');
@@ -200,16 +205,18 @@ namespace Bart {
                     }
                 } else {
                     console.log('token match');
-                    if (tokenState == TokenState.QUOTE) {
-                        continue;
-                    } else if (tokenState == undefined) {
+                    if (tokenState == undefined) {
                         tokenStart = i;
                         tokenState = TokenState.TOKEN;
-                    } else if (i == input.length-1) {
+                    }
+
+                    if (i == input.length-1) {
                         console.log('End of string -- terminating');
                         // End of string -- this is the end of the token
                         tokens.push(new RawToken(tokenStart, i, input.slice(tokenStart, i+1)));
-                    }
+                    } else if (tokenState == TokenState.QUOTE) {
+                        continue;
+                    } 
                 }
             }
 

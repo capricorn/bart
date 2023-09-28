@@ -105,6 +105,11 @@
         console.log('receive filter input: ' + event);
 
         // TODO: Accept printable characters; handle other cases
+        let controlKeys = ['Shift', 'Meta', 'Control', 'Alt', 'Escape'];
+        if (controlKeys.includes(event.key)) {
+            return;
+        }
+
         if (event.key == 'Backspace') {
             bartFilterInput = bartFilterInput.slice(0, -1);
         } else {
@@ -112,6 +117,8 @@
             bartFilterInput += event.key;
         }
 
+        let filterDiv = document.getElementById('bart-filter');
+        filterDiv.innerHTML = Bart.Lexer.highlight(bartFilterInput);
         console.log('filter input: ' + bartFilterInput);
     }
 
