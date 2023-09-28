@@ -298,6 +298,10 @@
         user-select: none;
     }
 
+    #bart-filter {
+        width: 250px;
+    }
+
 
     /* Prettyprint styling */
     #bart-prettyprint {
