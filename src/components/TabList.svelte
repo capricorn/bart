@@ -11,6 +11,7 @@
     let shiftKeyPressed = false;
     let hoveredTab: Tab = undefined;
     let bartFilterInput = '';
+    let inputCursorPosition = 0;
 
     // TODO: A better default?
     let groupBySelection = "";
@@ -33,6 +34,18 @@
     function handleCursorTap(element: Element) {
         console.log('tapped filter element');
         console.log(element);
+
+        let elementId: number = parseInt(element.id.match(/\d+/)[0]);
+        inputCursorPosition = elementId;
+
+        // Underline the current selection
+        for (const e of document.getElementsByClassName('bart-filter-char')) {
+            (e as HTMLElement).style.textDecoration = '';
+        }
+
+        (element as HTMLElement).style.textDecoration = 'underline';
+
+
         //console.log('Tapped cursor index: ' + index);
     }
 
