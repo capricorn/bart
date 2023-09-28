@@ -219,7 +219,7 @@
         <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected | {filteredTabs.length} filtered</h1>
         <div>
             <label for="bart-filter">Filter</label>
-            <input type="text" id="bart-filter" bind:value={bartFilterInput}/>
+            <div contenteditable="true" id="bart-filter" bind:textContent={bartFilterInput}></div>
             <button id="bart-execute-button" on:click={executeBartCommand}>Execute</button>
         </div>
         <div id="bart-prettyprint">
