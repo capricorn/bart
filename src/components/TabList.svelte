@@ -335,7 +335,7 @@
 
     #bart-filter {
         width: 250px;
-        height: 16px;
+        height: 20px;
         font-family: monospace;
         font-size: 16px;
         display: inline-block;
@@ -345,9 +345,7 @@
     }
 
     #bart-filter:focus {
-        border-width: 1px;
-        border-style: solid;
-        border-color: red;
+        border: none;
     }
 
 
