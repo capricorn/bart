@@ -360,7 +360,7 @@
     }
 
     :global(.bart-combinator) {
-        color: black;
+        color: orange;
     }
 
     :global(.bart-string) {
