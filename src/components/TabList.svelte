@@ -30,6 +30,12 @@
         element.focus({focusVisible: true});
     }
 
+    function handleCursorTap(element: Element) {
+        console.log('tapped filter element');
+        console.log(element);
+        //console.log('Tapped cursor index: ' + index);
+    }
+
     async function executeBartCommand() {
         await ast.execute(filteredTabs);
     }
@@ -54,6 +60,17 @@
             console.log('"google.com"'.includes(tab['url']));
         }
         filteredTabs = tabs.filter(tab => filter(tab, bartContext));
+    }
+
+    $: {
+        if (bartFilterInput.length > 0) {
+            // Is this in order?
+            let inputElements = document.getElementsByClassName('bart-filter-char');
+            console.log(`Updating ${inputElements.length} filter input listeners`);
+            for (const e of inputElements) {
+                e.addEventListener('click', () => handleCursorTap(e));
+            }
+        }
     }
 
     /*

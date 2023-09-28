@@ -109,7 +109,9 @@ namespace Bart {
                         break;
                 }
 
-                return `<span class="${bartClass}">${this.value}</span>`
+                let explodedValue = explode(this.value).map(char => `<span class="bart-filter-char">${char}</span>`).join('');
+
+                return `<span class="${bartClass}">${explodedValue}</span>`
             }
         }
 
@@ -247,6 +249,15 @@ namespace Bart {
             }
 
             return tokens;
+        }
+
+        function explode(input: string): string[] {
+            let exploded: string[] = [];
+            for (const char of input) {
+                exploded.push(char);
+            }
+
+            return exploded;
         }
 
         export function highlight(input: string): string {
