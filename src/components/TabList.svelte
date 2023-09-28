@@ -118,7 +118,7 @@
         }
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = Bart.Lexer.highlight(bartFilterInput);
+        filterDiv.innerHTML = Bart.Lexer.highlight(bartFilterInput) + '<span>_</span>';
         console.log('filter input: ' + bartFilterInput);
     }
 
