@@ -35,8 +35,14 @@
         console.log('tapped filter element');
         console.log(element);
 
-        let elementId: number = parseInt(element.id.match(/\d+/)[0]);
-        inputCursorPosition = elementId;
+        // TODO: Handle case of 'last' element
+        if (element.id == 'bart-filter-last-slot') {
+            inputCursorPosition = bartFilterInput.length;
+            console.log('tapped last filter slot');
+        } else {
+            let elementId: number = parseInt(element.id.match(/\d+/)[0]);
+            inputCursorPosition = elementId;
+        }
 
         // Underline the current selection
         for (const e of document.getElementsByClassName('bart-filter-char')) {
@@ -83,6 +89,9 @@
             for (const e of inputElements) {
                 e.addEventListener('click', () => handleCursorTap(e));
             }
+
+            let lastInputSlot = document.getElementById('bart-filter-last-slot')
+            lastInputSlot.addEventListener('click', () => handleCursorTap(lastInputSlot));
         }
     }
 
@@ -151,7 +160,7 @@
         }
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = '<span>bart> </span>' + Bart.Lexer.highlight(bartFilterInput) + '<span>_</span>';
+        filterDiv.innerHTML = '<span>bart> </span>' + Bart.Lexer.highlight(bartFilterInput) + '<span id="bart-filter-last-slot">_</span>';
         console.log('filter input: ' + bartFilterInput);
     }
 
@@ -270,10 +279,11 @@
     }
 
     onMount(async () => {
+        console.log('mount');
         bartContext = new Bart.TabContext();
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = '<span>bart> </span>' + '<span>_</span>';
+        filterDiv.innerHTML = '<span>bart> </span>' + '<span id="bart-filter-last-slot">_</span>';
 
         await fetchTabs();
 
