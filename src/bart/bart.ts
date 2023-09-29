@@ -111,7 +111,7 @@ namespace Bart {
 
                 let explodedValue = 
                     explode(this.value)
-                        .map((char, index) => `<span class="bart-filter-char" id="bart-filter-char-${index}">${char}</span>`)
+                        .map((char, index) => `<span class="bart-filter-char" id="bart-filter-char-${index+this.start}">${char}</span>`)
                         .join('');
 
                 return `<span class="${bartClass}">${explodedValue}</span>`

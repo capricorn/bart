@@ -141,10 +141,12 @@
         }
 
         if (event.key == 'Backspace') {
+            // TODO: Take cursor position into account
             bartFilterInput = bartFilterInput.slice(0, -1);
         } else {
             // TODO: Does this handle shift correctly..?
-            bartFilterInput += event.key;
+            bartFilterInput = bartFilterInput.slice(0, inputCursorPosition) + event.key + bartFilterInput.slice(inputCursorPosition)
+            inputCursorPosition += 1;
         }
 
         let filterDiv = document.getElementById('bart-filter');
