@@ -84,6 +84,33 @@
     }
 
     $: {
+        // Update underline when input cursor position changes
+        for (const e of document.getElementsByClassName('bart-filter-char')) {
+            (e as HTMLElement).style.textDecoration = '';
+        }
+
+        let elementId = (inputCursorPosition == bartFilterInput.length) ? 'bart-filter-last-slot' : `bart-filter-char-${inputCursorPosition}`;
+        let element = document.getElementById(elementId);
+
+        if (element != null && elementId != 'bart-filter-last-slot') {
+            element.style.textDecoration = 'underline';
+        }
+
+        /*
+        if (element.id == 'bart-filter-last-slot') {
+            inputCursorPosition = bartFilterInput.length;
+            lastSlotElement.style.opacity = '1.0';
+            console.log('tapped last filter slot');
+        } else {
+            let elementId: number = parseInt(element.id.match(/\d+/)[0]);
+            inputCursorPosition = elementId;
+            (element as HTMLElement).style.textDecoration = 'underline';
+            lastSlotElement.style.opacity = '0.0';
+        }
+        */
+    }
+
+    $: {
         if (bartFilterInput.length > 0) {
             // Is this in order?
             let inputElements = document.getElementsByClassName('bart-filter-char');
