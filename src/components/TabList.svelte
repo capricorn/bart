@@ -279,6 +279,8 @@
 
         let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
         bartContext.currentWindowId = tab.windowId;
+
+        focusFilter();
     })
 </script>
 
