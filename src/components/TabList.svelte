@@ -141,8 +141,9 @@
         }
 
         if (event.key == 'Backspace') {
-            // TODO: Take cursor position into account
-            bartFilterInput = bartFilterInput.slice(0, -1);
+            // When selecting a position, delete char to the left.
+            bartFilterInput = bartFilterInput.slice(0, Math.max(0, inputCursorPosition-1)) + bartFilterInput.slice(inputCursorPosition);
+            inputCursorPosition = Math.max(0, inputCursorPosition-1);
         } else {
             // TODO: Does this handle shift correctly..?
             bartFilterInput = bartFilterInput.slice(0, inputCursorPosition) + event.key + bartFilterInput.slice(inputCursorPosition)
