@@ -25,6 +25,8 @@
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
 
+    let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
+
     function focusFilter() {
         console.log('Focusing filter div');
         let element = document.getElementById('bart-filter');
@@ -35,24 +37,24 @@
         console.log('tapped filter element');
         console.log(element);
 
-        // TODO: Handle case of 'last' element
-        if (element.id == 'bart-filter-last-slot') {
-            inputCursorPosition = bartFilterInput.length;
-            console.log('tapped last filter slot');
-        } else {
-            let elementId: number = parseInt(element.id.match(/\d+/)[0]);
-            inputCursorPosition = elementId;
-        }
-
         // Underline the current selection
         for (const e of document.getElementsByClassName('bart-filter-char')) {
             (e as HTMLElement).style.textDecoration = '';
         }
 
-        (element as HTMLElement).style.textDecoration = 'underline';
+        let lastSlotElement = document.getElementById('bart-filter-last-slot') as HTMLElement;
 
-
-        //console.log('Tapped cursor index: ' + index);
+        // TODO: Handle case of 'last' element
+        if (element.id == 'bart-filter-last-slot') {
+            inputCursorPosition = bartFilterInput.length;
+            lastSlotElement.style.opacity = '1.0';
+            console.log('tapped last filter slot');
+        } else {
+            let elementId: number = parseInt(element.id.match(/\d+/)[0]);
+            inputCursorPosition = elementId;
+            (element as HTMLElement).style.textDecoration = 'underline';
+            lastSlotElement.style.opacity = '0.0';
+        }
     }
 
     async function executeBartCommand() {
@@ -160,7 +162,9 @@
         }
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = '<span>bart> </span>' + Bart.Lexer.highlight(bartFilterInput) + '<span id="bart-filter-last-slot">_</span>';
+        filterDiv.innerHTML = '<span>bart> </span>' + Bart.Lexer.highlight(bartFilterInput) + lastSlotHTML;
+
+        document.getElementById('bart-filter-last-slot').style.opacity = (inputCursorPosition == bartFilterInput.length) ? '1.0' : '0.0';
         console.log('filter input: ' + bartFilterInput);
     }
 
@@ -283,7 +287,7 @@
         bartContext = new Bart.TabContext();
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = '<span>bart> </span>' + '<span id="bart-filter-last-slot">_</span>';
+        filterDiv.innerHTML = '<span>bart> </span>' + lastSlotHTML;
 
         await fetchTabs();
 
