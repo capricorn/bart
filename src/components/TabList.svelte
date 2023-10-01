@@ -421,6 +421,8 @@
 
         border-width: 1px;
         border-style: solid;
+
+        white-space: pre;
     }
 
     #bart-filter:focus {

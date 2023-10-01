@@ -276,9 +276,19 @@ namespace Bart {
                     let spacePaddingCount = ((tokens[i+1].start - tokens[i].end) - 1);
                     for (var j = 0; j < spacePaddingCount; j++) {
                         highlight += " ";
-                    }
+                   }
                     highlight += "</span>";
                 }
+            }
+
+            // Preserve any trailing whitespace
+            if (tokens.length > 0) {
+                let trailingWhitespaceCount = (input.length-1)-tokens[tokens.length-1].end;
+                highlight += "<span>";
+                for (i = 0; i < trailingWhitespaceCount; i++) {
+                    highlight += " ";
+                }
+                highlight += "</span>";
             }
 
             return highlight;
