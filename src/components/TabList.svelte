@@ -4,8 +4,10 @@
     import { Bart } from "src/bart/bart";
 
     type Tab = chrome.tabs.Tab;
+    type Window = chrome.windows.Window;
 
     let tabs: Tab[] = [];
+    let windows: Window[] = [];
     let selectedTabIds: Set<number> = new Set();
     let metaKeyPressed = false;
     let shiftKeyPressed = false;
@@ -158,6 +160,10 @@
         tabs = await chrome.tabs.query({});
     }
 
+    async function fetchWindows() {
+        windows = await chrome.windows.getAll({});
+    }
+
     function selectTab(tab: Tab) {
         console.log(selectedTabIds);
         if (metaKeyPressed) {
@@ -234,12 +240,14 @@
 
         selectedTabIds = new Set();
         await fetchTabs();
+        await fetchWindows();
     }
 
     onMount(async () => {
         bartContext = new Bart.TabContext();
 
         await fetchTabs();
+        await fetchWindows();
 
         let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
         bartContext.currentWindowId = tab.windowId;
@@ -250,7 +258,7 @@
 
 <div class="container" >
     <div id="control-header">
-        <h1>{tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected | {filteredTabs.length} filtered</h1>
+        <h1>{windows.length} Windows | {tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected | {filteredTabs.length} filtered</h1>
         <div>
             <label for="bart-filter">Filter</label>
             <div id="bart-filter" on:click={focusFilter} tabindex="0"></div>
