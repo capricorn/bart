@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import * as _ from "lodash";
     import { Bart } from "src/bart/bart";
+    import BartHeader from "./BartHeader.svelte";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -258,7 +259,7 @@
 
 <div class="container" >
     <div id="control-header">
-        <h1>{windows.length} Windows | {tabs.length} {tabs.length == 1 ? "Tab" : "Tabs"} | {selectedTabIds.size} selected | {filteredTabs.length} filtered</h1>
+        <BartHeader tabs={tabs} windows={windows} selectedTabs={selectedTabIds} filteredTabs={filteredTabs}/>
         <div>
             <label for="bart-filter">Filter</label>
             <div id="bart-filter" on:click={focusFilter} tabindex="0"></div>
