@@ -235,7 +235,7 @@ namespace Bart {
 
             // TODO: start/end position included in `tokenize` output
             for (const token of tokenizedInput) {
-                if (Bart.Lexer.isString(token.value)) {
+                if (token.value.startsWith('"')) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.StringArg, token.value));
                 } else if (Bart.Lexer.isFilter(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Filter, token.value));
