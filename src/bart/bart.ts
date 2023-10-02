@@ -24,10 +24,12 @@ namespace Bart {
         title: string
         url: string
         windowId: number
+        id: number
     }
 
     export interface Context {
         currentWindowId: number
+        selectedTabIds: Set<number>;
     }
 
     export class Browser {
@@ -47,17 +49,20 @@ namespace Bart {
 
     export class TabContext implements Context {
         currentWindowId: number
+        selectedTabIds: Set<number>
     }
 
     export class DummyTab implements Tab {
         title: string
         url: string
         windowId: number
+        id: number
 
-        constructor(title: string, url: string, windowId: number = 0) {
+        constructor(title: string, url: string, windowId: number = 0, id: number = 0) {
             this.title = title;
             this.url = url;
             this.windowId = windowId;
+            this.id = id;
         }
     }
 
@@ -366,6 +371,8 @@ namespace Bart {
                 switch (this.type) {
                     case 'curr':
                         return (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
+                    case '$':
+                        return (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
                     default:
                         let stringFilter = this.arg.filter();
                         return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]) };

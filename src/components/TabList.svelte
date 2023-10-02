@@ -27,6 +27,12 @@
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
 
+    $: {
+        if (bartContext) {
+            bartContext.selectedTabIds = selectedTabIds;
+        }
+    }
+
     function focusFilter() {
         console.log('Focusing filter div');
         let element = document.getElementById('bart-filter');
