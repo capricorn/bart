@@ -274,7 +274,7 @@ test('Test match all combinator (empty string program)', () => {
 
     let context = new Bart.TabContext();
     let ast = Bart.Parser.parse('');
-    let filter = ast.filter();
+    let filter = ast.filter.filter();
 
     expect(tabs.filter(tab => filter(tab, context)).length).toBe(3);
 });
