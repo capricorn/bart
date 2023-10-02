@@ -149,7 +149,7 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr' ].includes(token);
+            return [ 'title', 'url', 'curr', '$' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
