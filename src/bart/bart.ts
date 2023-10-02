@@ -299,6 +299,34 @@ namespace Bart {
                 this.modifier = modifier;
             }
 
+            private get groupingProperty(): string {
+                if (this.modifier == 'window') {
+                    return 'windowId';
+                }
+
+                return 'id';
+            }
+
+            group(tabs: Tab[]): Record<string, Tab[]> {
+                if (this.modifier == 'none') {
+                    return {'none': tabs};
+                }
+
+                let grouped: Record<string, Tab[]> = {};
+
+                let property = this.groupingProperty;
+                for (const tab of tabs) {
+                    let key: string = tab[property];
+                    if ((key in grouped) == false) {
+                        grouped[key] = [];
+                    }
+
+                    grouped[key].push(tab);
+                }
+
+                return grouped;
+            }
+
             static get none(): GroupModifier {
                 return new GroupModifier("none");
             }

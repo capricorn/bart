@@ -63,6 +63,9 @@
             console.log('"google.com"'.includes(tab['url']));
         }
         filteredTabs = tabs.filter(tab => filter(tab, bartContext));
+
+        console.log('group modifier:');
+        console.log(ast.groupModifier.group(filteredTabs));
     }
 
     /*
