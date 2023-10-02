@@ -385,4 +385,8 @@
     :global(.bart-command) {
         color: red;
     }
+
+    :global(.bart-group-modifier) {
+        color: blue;
+    }
 </style>

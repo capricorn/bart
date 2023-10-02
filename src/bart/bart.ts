@@ -111,6 +111,9 @@ namespace Bart {
                     case TokenType.Negation:
                         bartClass = "bart-combinator";
                         break;
+                    case TokenType.GroupModifier:
+                        bartClass = "bart-group-modifier";
+                        break;
                 }
 
                 return `<span class="${bartClass}">${this.value}</span>`
@@ -145,7 +148,12 @@ namespace Bart {
             Filter,
             Negation,
             Combinator,
-            Command
+            Command,
+            GroupModifier
+        }
+
+        export function isGroupModifier(token: string): boolean {
+            return token == "group";
         }
 
         export function isString(token: string): boolean {
@@ -244,6 +252,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Combinator, token.value));
                 } else if (Bart.Lexer.isCommand(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Command, token.value));
+                } else if (Bart.Lexer.isGroupModifier(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.GroupModifier, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();
