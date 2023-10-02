@@ -18,7 +18,6 @@
  */
 
 // First step: tokenize
-
 namespace Bart {
     export interface Tab {
         title: string
