@@ -298,3 +298,19 @@ test('Test "curr" filter', () => {
     expect(filteredTabs.length).toBe(1);
     expect(filteredTabs[0].title).toBe('"abc"');
 });
+
+test('Test $ (selected) tab filter', () => {
+    let context = new Bart.TabContext();
+    context.selectedTabIds = new Set([2]);
+
+    let tabs = [
+        new Bart.DummyTab('"xyz"', ' ', 30, 1),
+        new Bart.DummyTab('"rst"', ' ', 70, 2),
+        new Bart.DummyTab('"abc"', ' ', 70, 3),
+    ];
+
+    let filteredTabs = Bart.Interpreter.interpret('$', tabs, context);
+
+    expect(filteredTabs.length).toBe(1);
+    expect(filteredTabs[0].id).toBe(2);
+});
