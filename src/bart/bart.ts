@@ -292,6 +292,18 @@ namespace Bart {
     export namespace Parser {
         export class ParseError extends Error {}
 
+        export class GroupModifier {
+            modifier: string;
+
+            constructor(modifier: string) {
+                this.modifier = modifier;
+            }
+
+            static get none(): GroupModifier {
+                return new GroupModifier("none");
+            }
+        }
+
         export class StringCombinator extends PrettyPrint {
             combinator: string
             strings: string[]
@@ -456,18 +468,21 @@ namespace Bart {
             type: string
             args: StringCombinator | undefined
             filter: FilterCombinator | undefined
+            groupModifier: GroupModifier;
             browser: Browser;
 
             constructor(
                 type: string,
                 args: StringCombinator | undefined,
                 filter: FilterCombinator | undefined,
+                groupModifier: GroupModifier = GroupModifier.none,
                 browser: Browser = new Browser()
             ) {
                 super();
                 this.type = type;
                 this.args = args;
                 this.filter = filter;
+                this.groupModifier = groupModifier;
                 this.browser = browser;
             }
 
@@ -499,7 +514,7 @@ namespace Bart {
 
             static noop(browser: Browser = new Browser()): Command {
                 let filter = new MatchAllFilterCombinator();
-                return new Command('.', StringCombinator.emptyCombinator, filter, browser);
+                return new Command('.', StringCombinator.emptyCombinator, filter, GroupModifier.none, browser);
             }
         }
 
@@ -537,6 +552,21 @@ namespace Bart {
 
         export function isFilterCombinatorSequence(tokens: Lexer.Token[]): boolean {
             return Lexer.isCombinator(tokens[0].value) && Lexer.isFilter(tokens[1].value);
+        }
+
+        export function consumeGroupModifier(tokens: Lexer.Token[]): GroupModifier {
+            // The first token will be 'group'
+            if (Bart.Lexer.isGroupModifier(tokens[0].value) == false) {
+                throw new ParseError();
+            }
+
+            tokens = tokens.slice(1);
+
+            if (Bart.Lexer.isString(tokens[0].value) == false) {
+                throw new ParseError();
+            }
+
+            return new GroupModifier(tokens[0].value.slice(1,-1));
         }
 
         // TODO
@@ -620,13 +650,15 @@ namespace Bart {
                     // Should have consumed all tokens here
                     tokens = remainder;
                     break;
+                } else if (Bart.Lexer.isGroupModifier(tokens[0].value)) {
+                    break;
                 } else {
                     throw new ParseError();
                 }
             }
 
             // TODO
-            return [ new FilterCombinator(combinatorType, filters, childCombinator), [] ];
+            return [ new FilterCombinator(combinatorType, filters, childCombinator), tokens ];
         }
 
         export function parseStringCombinator(
@@ -659,14 +691,19 @@ namespace Bart {
 
             // A command w/out a filter assumes the match-all filter
             let filterCombinator = Filter.matchAllFilter;
+            let groupModifier = GroupModifier.none;
 
             if (tokens.length > 0) {
-                let [combinator, _] = consumeFilterCombinator(tokens);
-                filterCombinator = combinator;
+                [filterCombinator, tokens] = consumeFilterCombinator(tokens);
             }
 
+            // If there is a group modifier it will remain after all other tokens are parsed.
+            if (tokens.length > 0) {
+                groupModifier = consumeGroupModifier(tokens);
+                console.log('Parsing group modifier');
+            }
 
-            return new Command(commandSymbol, commandArgs, filterCombinator);
+            return new Command(commandSymbol, commandArgs, filterCombinator, groupModifier);
         }
     }
 
