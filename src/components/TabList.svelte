@@ -53,6 +53,9 @@
         }
     }
 
+    let ast: Bart.Parser.Command = Bart.Parser.Command.noop();
+    let groupedFilteredTabs: Record<string, Tab[]> = {};
+
     // TODO: Handle parse error
     $: ast = parseAST(bartFilterInput);
     $: console.dir(ast, { depth: null });
@@ -67,6 +70,8 @@
         console.log('group modifier:');
         console.log(ast.groupModifier.group(filteredTabs));
     }
+
+    $: groupedFilteredTabs = ast.groupModifier.group(filteredTabs);
 
     /*
     $: {
@@ -301,24 +306,66 @@
         
         <button on:click={closeSelectedTabs}>Close selected</button>
     </div>
-    {#each filteredTabs as tab (tab.id)}
-        <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
-            on:click={() => selectTab(tab)} 
-            on:mouseover={() => mouseOverTab(tab)}
-            style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
+    {#if ast.groupModifier.modifier == 'none'}
+        {#each filteredTabs as tab (tab.id)}
+            <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
+                on:click={() => selectTab(tab)} 
+                on:mouseover={() => mouseOverTab(tab)}
+                style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
 
-            {tab.title}
-            <br>
-            {#if showTabDomain}
-            <span class="tab-link">{tab.url}</span>
-            <br>
-            {/if}
-            {#if showTabWindow}
-            <span class="tab-link">Window {tab.windowId}</span>
-            {/if}
+                {tab.title}
+                <br>
+                {#if showTabDomain}
+                <span class="tab-link">{tab.url}</span>
+                <br>
+                {/if}
+                {#if showTabWindow}
+                <span class="tab-link">Window {tab.windowId}</span>
+                {/if}
 
-        </div>
-    {/each}
+            </div>
+        {/each}
+    {:else}
+        {#each Object.keys(groupedFilteredTabs) as groupKey}
+            <h1>{groupKey}</h1>
+            {#each groupedFilteredTabs[groupKey] as tab (tab.id) }
+                <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
+                    on:click={() => selectTab(tab)} 
+                    on:mouseover={() => mouseOverTab(tab)}
+                    style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
+
+                    {tab.title}
+                    <br>
+                    {#if showTabDomain}
+                    <span class="tab-link">{tab.url}</span>
+                    <br>
+                    {/if}
+                    {#if showTabWindow}
+                    <span class="tab-link">Window {tab.windowId}</span>
+                    {/if}
+                </div>
+            {/each}
+            <!--
+            {#each groupedFilteredTabs.groupKey as tab (tab.id)}
+                <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
+                    on:click={() => selectTab(tab)} 
+                    on:mouseover={() => mouseOverTab(tab)}
+                    style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
+
+                    {tab.title}
+                    <br>
+                    {#if showTabDomain}
+                    <span class="tab-link">{tab.url}</span>
+                    <br>
+                    {/if}
+                    {#if showTabWindow}
+                    <span class="tab-link">Window {tab.windowId}</span>
+                    {/if}
+                </div>
+            {/each}
+            -->
+        {/each}
+    {/if}
 </div>
 
 <style>

@@ -330,6 +330,10 @@ namespace Bart {
             static get none(): GroupModifier {
                 return new GroupModifier("none");
             }
+
+            static valid(modifier: string): boolean {
+                return ['window', 'domain'].includes(modifier);
+            }
         }
 
         export class StringCombinator extends PrettyPrint {
@@ -590,7 +594,7 @@ namespace Bart {
 
             tokens = tokens.slice(1);
 
-            if (Bart.Lexer.isString(tokens[0].value) == false) {
+            if (Bart.Lexer.isString(tokens[0].value) == false || GroupModifier.valid(tokens[0].value.slice(1,-1)) == false) {
                 throw new ParseError();
             }
 
