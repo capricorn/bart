@@ -333,7 +333,7 @@
         {/each}
     {:else}
         {#each Object.keys(groupedFilteredTabs) as groupKey}
-            <h1>{groupKey}</h1>
+            <h1>{groupKey} ({groupedFilteredTabs[groupKey].length})</h1>
             {#each groupedFilteredTabs[groupKey] as tab (tab.id) }
                 <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
                     on:click={() => selectTab(tab)} 
