@@ -14,6 +14,7 @@
     let shiftKeyPressed = false;
     let hoveredTab: Tab = undefined;
     let bartFilterInput = '';
+    let inputCursorPosition = 0;
 
     // TODO: A better default?
     let groupBySelection = "none";
@@ -38,11 +39,36 @@
             bartContext.selectedTabIds = selectedTabIds;
         }
     }
+    let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
     function focusFilter() {
         console.log('Focusing filter div');
         let element = document.getElementById('bart-filter');
         element.focus({focusVisible: true});
+    }
+
+    function handleCursorTap(element: Element) {
+        console.log('tapped filter element');
+        console.log(element);
+
+        // Underline the current selection
+        for (const e of document.getElementsByClassName('bart-filter-char')) {
+            (e as HTMLElement).style.textDecoration = '';
+        }
+
+        let lastSlotElement = document.getElementById('bart-filter-last-slot') as HTMLElement;
+
+        // TODO: Handle case of 'last' element
+        if (element.id == 'bart-filter-last-slot') {
+            inputCursorPosition = bartFilterInput.length;
+            lastSlotElement.style.opacity = '1.0';
+            console.log('tapped last filter slot');
+        } else {
+            let elementId: number = parseInt(element.id.match(/\d+/)[0]);
+            inputCursorPosition = elementId;
+            (element as HTMLElement).style.textDecoration = 'underline';
+            lastSlotElement.style.opacity = '0.0';
+        }
     }
 
     async function executeBartCommand() {
@@ -78,6 +104,46 @@
     }
 
     $: groupedFilteredTabs = ast.groupModifier.group(filteredTabs);
+    $: {
+        // Update underline when input cursor position changes
+        for (const e of document.getElementsByClassName('bart-filter-char')) {
+            (e as HTMLElement).style.textDecoration = '';
+        }
+
+        let elementId = (inputCursorPosition == bartFilterInput.length) ? 'bart-filter-last-slot' : `bart-filter-char-${inputCursorPosition}`;
+        let element = document.getElementById(elementId);
+
+        if (element != null && elementId != 'bart-filter-last-slot') {
+            element.style.textDecoration = 'underline';
+        }
+
+        /*
+        if (element.id == 'bart-filter-last-slot') {
+            inputCursorPosition = bartFilterInput.length;
+            lastSlotElement.style.opacity = '1.0';
+            console.log('tapped last filter slot');
+        } else {
+            let elementId: number = parseInt(element.id.match(/\d+/)[0]);
+            inputCursorPosition = elementId;
+            (element as HTMLElement).style.textDecoration = 'underline';
+            lastSlotElement.style.opacity = '0.0';
+        }
+        */
+    }
+
+    $: {
+        if (bartFilterInput.length > 0) {
+            // Is this in order?
+            let inputElements = document.getElementsByClassName('bart-filter-char');
+            console.log(`Updating ${inputElements.length} filter input listeners`);
+            for (const e of inputElements) {
+                e.addEventListener('click', () => handleCursorTap(e));
+            }
+
+            let lastInputSlot = document.getElementById('bart-filter-last-slot')
+            lastInputSlot.addEventListener('click', () => handleCursorTap(lastInputSlot));
+        }
+    }
 
     /*
     $: {
@@ -134,14 +200,23 @@
         }
 
         if (event.key == 'Backspace') {
-            bartFilterInput = bartFilterInput.slice(0, -1);
+            // When selecting a position, delete char to the left.
+            bartFilterInput = bartFilterInput.slice(0, Math.max(0, inputCursorPosition-1)) + bartFilterInput.slice(inputCursorPosition);
+            inputCursorPosition = Math.max(0, inputCursorPosition-1);
+        } else if (event.key == 'ArrowLeft') {
+            inputCursorPosition = Math.max(0, inputCursorPosition-1);
+        } else if (event.key == 'ArrowRight') {
+            inputCursorPosition = Math.min(inputCursorPosition+1, bartFilterInput.length);
         } else {
             // TODO: Does this handle shift correctly..?
-            bartFilterInput += event.key;
+            bartFilterInput = bartFilterInput.slice(0, inputCursorPosition) + event.key + bartFilterInput.slice(inputCursorPosition)
+            inputCursorPosition += 1;
         }
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = Bart.Lexer.highlight(bartFilterInput) + '<span>_</span>';
+        filterDiv.innerHTML = '<span>bart> </span>' + Bart.Lexer.highlight(bartFilterInput) + lastSlotHTML;
+
+        document.getElementById('bart-filter-last-slot').style.opacity = (inputCursorPosition == bartFilterInput.length) ? '1.0' : '0.0';
         console.log('filter input: ' + bartFilterInput);
     }
 
@@ -265,13 +340,19 @@
     }
 
     onMount(async () => {
+        console.log('mount');
         bartContext = new Bart.TabContext();
+
+        let filterDiv = document.getElementById('bart-filter');
+        filterDiv.innerHTML = '<span>bart> </span>' + lastSlotHTML;
 
         await fetchTabs();
         await fetchWindows();
 
         let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
         bartContext.currentWindowId = tab.windowId;
+
+        focusFilter();
     })
 </script>
 
@@ -413,6 +494,8 @@
 
         border-width: 1px;
         border-style: solid;
+
+        white-space: pre;
     }
 
     #bart-filter:focus {

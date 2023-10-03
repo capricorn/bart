@@ -116,7 +116,12 @@ namespace Bart {
                         break;
                 }
 
-                return `<span class="${bartClass}">${this.value}</span>`
+                let explodedValue = 
+                    explode(this.value)
+                        .map((char, index) => `<span class="bart-filter-char" id="bart-filter-char-${index+this.start}">${char}</span>`)
+                        .join('');
+
+                return `<span class="${bartClass}">${explodedValue}</span>`
             }
         }
 
@@ -242,7 +247,7 @@ namespace Bart {
 
             // TODO: start/end position included in `tokenize` output
             for (const token of tokenizedInput) {
-                if (Bart.Lexer.isString(token.value)) {
+                if (token.value.startsWith('"')) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.StringArg, token.value));
                 } else if (Bart.Lexer.isFilter(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Filter, token.value));
@@ -263,6 +268,15 @@ namespace Bart {
             return tokens;
         }
 
+        function explode(input: string): string[] {
+            let exploded: string[] = [];
+            for (const char of input) {
+                exploded.push(char);
+            }
+
+            return exploded;
+        }
+
         export function highlight(input: string): string {
             let tokens: Token[] = lex(input);
             console.log('highlight tokens: ');
@@ -276,9 +290,19 @@ namespace Bart {
                     let spacePaddingCount = ((tokens[i+1].start - tokens[i].end) - 1);
                     for (var j = 0; j < spacePaddingCount; j++) {
                         highlight += " ";
-                    }
+                   }
                     highlight += "</span>";
                 }
+            }
+
+            // Preserve any trailing whitespace
+            if (tokens.length > 0) {
+                let trailingWhitespaceCount = (input.length-1)-tokens[tokens.length-1].end;
+                highlight += "<span>";
+                for (i = 0; i < trailingWhitespaceCount; i++) {
+                    highlight += " ";
+                }
+                highlight += "</span>";
             }
 
             return highlight;
