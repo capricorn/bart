@@ -182,6 +182,10 @@
             // When selecting a position, delete char to the left.
             bartFilterInput = bartFilterInput.slice(0, Math.max(0, inputCursorPosition-1)) + bartFilterInput.slice(inputCursorPosition);
             inputCursorPosition = Math.max(0, inputCursorPosition-1);
+        } else if (event.key == 'ArrowLeft') {
+            inputCursorPosition = Math.max(0, inputCursorPosition-1);
+        } else if (event.key == 'ArrowRight') {
+            inputCursorPosition = Math.min(inputCursorPosition+1, bartFilterInput.length);
         } else {
             // TODO: Does this handle shift correctly..?
             bartFilterInput = bartFilterInput.slice(0, inputCursorPosition) + event.key + bartFilterInput.slice(inputCursorPosition)
