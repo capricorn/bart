@@ -336,7 +336,7 @@ namespace Bart {
             }
 
             static valid(modifier: string): boolean {
-                return ['window', 'domain'].includes(modifier);
+                return ['window', 'domain', 'none'].includes(modifier);
             }
         }
 
@@ -551,6 +551,16 @@ namespace Bart {
             static noop(browser: Browser = new Browser()): Command {
                 let filter = new MatchAllFilterCombinator();
                 return new Command('.', StringCombinator.emptyCombinator, filter, GroupModifier.none, browser);
+            }
+
+            modifier(mod: GroupModifier): Command {
+                return new Command(
+                    this.type,
+                    this.args,
+                    this.filter,
+                    mod,
+                    this.browser
+                );
             }
         }
 

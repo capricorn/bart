@@ -16,7 +16,8 @@
     let bartFilterInput = '';
 
     // TODO: A better default?
-    let groupBySelection = "";
+    let groupBySelection = "none";
+    let groupModifier: Bart.Parser.GroupModifier = Bart.Parser.GroupModifier.none;
 
     let showTabDomain = false;
     let showTabWindow = false;
@@ -26,6 +27,11 @@
 
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
+
+    $: {
+        console.log('Group selection: ' + groupBySelection);
+        groupModifier = new Bart.Parser.GroupModifier(groupBySelection);
+    }
 
     $: {
         if (bartContext) {
@@ -57,7 +63,7 @@
     let groupedFilteredTabs: Record<string, Tab[]> = {};
 
     // TODO: Handle parse error
-    $: ast = parseAST(bartFilterInput);
+    $: ast = (groupBySelection == 'none') ? parseAST(bartFilterInput) : parseAST(bartFilterInput).modifier(groupModifier);
     $: console.dir(ast, { depth: null });
     $: {
         console.dir(ast, { depth: null })
@@ -286,7 +292,7 @@
         <div>
             <label for="group-select">Group by</label>
             <select name="group-by" id="group-select" bind:value={groupBySelection}>
-                <option value="">None</option>
+                <option value="none">None</option>
                 <option value="domain">Domain</option>
                 <option value="window">Window</option>
             </select>
