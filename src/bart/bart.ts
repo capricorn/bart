@@ -299,12 +299,16 @@ namespace Bart {
                 this.modifier = modifier;
             }
 
-            private get groupingProperty(): string {
-                if (this.modifier == 'window') {
-                    return 'windowId';
-                }
+            private get groupingProperty(): (tab: Tab) => string {
+                return (tab: Tab) => {
+                    if (this.modifier == 'window') {
+                        return tab.windowId + '';
+                    } else if (this.modifier == 'domain') {
+                        return new URL(tab.url).hostname;
+                    }
 
-                return 'id';
+                    return tab.id + '';
+                };
             }
 
             group(tabs: Tab[]): Record<string, Tab[]> {
@@ -316,7 +320,7 @@ namespace Bart {
 
                 let property = this.groupingProperty;
                 for (const tab of tabs) {
-                    let key: string = tab[property];
+                    let key: string = property(tab);
                     if ((key in grouped) == false) {
                         grouped[key] = [];
                     }
