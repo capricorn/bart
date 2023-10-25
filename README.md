@@ -3,7 +3,7 @@
 ```ebnf
 Command = "." | "bm";
 Combinator = "&" | "|";
-FilterName = "url" | "title";
+FilterName = "url" | "title" | "curr";
 
 StringCombinator 
 = string
