@@ -74,6 +74,23 @@ Example: filtering the prior query OR a tab of `developer.apple.com`:
 | url "developer.apple.com" & url "stackoverflow.com" title "iOS"
 ```
 
+### String arguments 
+
+Strings are specified in double quotes, e.g. "hello world". They currently
+do _not_ support escapes.
+
+Like filters, strings can be composed with the combinators in the
+set `{!, &, |}`. Likewise, if a sequence of strings has no combinator specified
+`&` is implicitly assumed.
+
+The idea with string combinators is that a predicate can be applied
+over them. For instance, given a predicate `f:string->bool`,
+a map `F:(f:string->bool, StringCombinator)->bool` can apply `f` like so:
+
+`F(f, | "abc" & "xyz" "ijk") = f("abc") || (f("xyz") && f("ijk"))`
+
+These string combinators are passed to filters as arguments.
+
 ## EBNF
 
 ```ebnf
