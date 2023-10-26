@@ -56,6 +56,24 @@ curr
 $
 ```
 
+### Filter composition
+
+Filters can be composed with the 'combinators' in the set `{|, &}`.
+If two filters are written consecutively without an explicit combinator
+composition is implicitly `&`, i.e. `f1 f2 == & f1 f2`.
+
+Example: filtering tabs for Stack Exchange with iOS in the title:
+
+```
+url "stackoverflow.com" title "iOS"
+```
+
+Example: filtering the prior query OR a tab of `developer.apple.com`:
+
+```
+| url "developer.apple.com" & url "stackoverflow.com" title "iOS"
+```
+
 ## EBNF
 
 ```ebnf
