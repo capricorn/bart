@@ -23,6 +23,39 @@ $ npm run build
 
 `bart` is now accessible from the 'Extensions' chrome toolbar button.
 
+## bart query language
+
+### Empty query
+
+If no query is present, every tab is filtered.
+
+### Filters
+
+If a query is not empty it must contain at least one filter.
+A filter is a predicate applied to some field of a tab, e.g. title.
+
+Example: filtering all tabs for `google.com`:
+
+```
+url "google.com"
+```
+
+N.B. Filters that operate on tab string fields (e.g. `title`) filter with `String.contains`.  
+N.B. String comparison is case insensitive; strings are made lowercase before comparison.
+
+#### Available filters
+
+```
+// Filter tabs with url containing the string arg
+url "url_to_match"
+// Filter tabs with title containing the string arg
+title "title_to_match"
+// Filter tabs to the current window
+curr
+// Filter tabs to tabs selected in UI
+$
+```
+
 ## EBNF
 
 ```ebnf
