@@ -41,6 +41,11 @@
     }
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
+    function selectedContextMenu(e) {
+        console.log('opening context menu');
+        e.preventDefault();
+    }
+
     function focusFilter() {
         console.log('Focusing filter div');
         let element = document.getElementById('bart-filter');
@@ -356,7 +361,7 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp}/>
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu|preventDefault={selectedContextMenu}/>
 
 <div class="container" >
     <div id="control-header">
