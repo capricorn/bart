@@ -4,6 +4,7 @@
     import { Bart } from "src/bart/bart";
     import BartHeader from "./BartHeader.svelte";
     import ContextMenu from "./ContextMenu.svelte";
+    import { Menu } from "./menu";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -55,7 +56,13 @@
             prevMenu.remove()
         }
         
-        new ContextMenu({ target: document.body, props: {x: x, y: y} })
+        new ContextMenu({ target: document.body, props: {x: x, y: y, options: [
+            // TODO: Access?
+            new Menu.MenuEntry(Menu.MenuEntryType.Submenu, 'Move', 
+                // TODO: Populate with windows from tabs (just by window id)
+                new Menu.Menu([new Menu.MenuEntry(Menu.MenuEntryType.Command, 'Test', () => {})])
+            ),
+        ]}})
     }
 
     function focusFilter() {

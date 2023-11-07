@@ -1,23 +1,35 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { Menu } from "./menu";
 
     export let x: number;
     export let y: number;
 
     let menu: HTMLElement;
-    let options = [ 'Move', 'Close', 'Clear filter' ];
+    // TODO: Convert to array of MenuEntry
+    //let options = [ 'Move', 'Close', 'Clear filter' ];
+    export let options: [Menu.MenuEntry];
 
-    let submenu = false;
+    let submenu: Menu.Menu = undefined;
 
     let width: number;
     let height: number;
 
-    function handleMenuSelection(option: string) {
+    // TODO: Rename to make hover clear
+    function handleMenuSelection(option: Menu.MenuEntry) {
         console.log('mouse over menu: ' + option);
 
-        // TODO: Better approach
-        if (option == 'Move') {
-            submenu = true;
+        // TODO: Will it work?
+        /*
+        switch (option.entryType) {
+            case Menu.MenuEntryType.Submenu:
+                break;
+            case Menu.MenuEntryType.Command:
+                break;
+        }
+        */
+        if (option.entryType == Menu.MenuEntryType.Submenu) {
+            submenu = option.action as Menu.Menu;
         }
     }
 
@@ -29,12 +41,14 @@
 
 <div id="bart-context-menu" bind:this={menu} bind:clientWidth={width} bind:clientHeight={height}>
     {#each options as option}
-    <div class="bart-context-menu-option" on:mouseover={() => handleMenuSelection(option)}>{option}</div>
+    <div class="bart-context-menu-option" on:mouseover={() => handleMenuSelection(option)}>{option.label}</div>
     {/each}
 </div>
 
+<!-- TODO: show set submenu -->
+
 {#if submenu}
-<svelte:self x={x+width} y={y}/>
+<svelte:self x={x+width} y={y} options={submenu.entries}/>
 {/if}
 
 <style>
