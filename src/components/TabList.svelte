@@ -58,7 +58,10 @@
 
         let windowCommands: Menu.MenuEntry[] = Array.from(new Set(filteredTabs.map(tab => { return tab.windowId })))
             .map((winId) => {
-                return new Menu.MenuEntry(Menu.MenuEntryType.Command, winId+'', () => {})
+                return new Menu.MenuEntry(Menu.MenuEntryType.Command, winId+'', () => {
+                    // Move the selected tabs
+                    chrome.tabs.move(Array.from(selectedTabIds), { index: -1, windowId: winId });
+                })
             })
         
         new ContextMenu({ target: document.body, props: {x: x, y: y, options: [
