@@ -3,6 +3,7 @@
     import * as _ from "lodash";
     import { Bart } from "src/bart/bart";
     import BartHeader from "./BartHeader.svelte";
+    import ContextMenu from "./ContextMenu.svelte";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -41,9 +42,20 @@
     }
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
-    function selectedContextMenu(e) {
+    function selectedContextMenu(e: MouseEvent) {
         console.log('opening context menu');
         e.preventDefault();
+
+        console.log(e);
+        let x = e.clientX;
+        let y = e.clientY;
+
+        let prevMenu = document.getElementById('bart-context-menu');
+        if (prevMenu) {
+            prevMenu.remove()
+        }
+        
+        new ContextMenu({ target: document.body, props: {x: x, y: y} })
     }
 
     function focusFilter() {
@@ -361,7 +373,7 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu|preventDefault={selectedContextMenu}/>
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)}/>
 
 <div class="container" >
     <div id="control-header">
