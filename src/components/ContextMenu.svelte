@@ -28,8 +28,16 @@
                 break;
         }
         */
+
         if (option.entryType == Menu.MenuEntryType.Submenu) {
             submenu = option.action as Menu.Menu;
+        }
+    }
+
+    function handleMenuClick(option: Menu.MenuEntry) {
+        if (option.entryType == Menu.MenuEntryType.Command) {
+            let command = option.action as Menu.MenuAction;
+            command();
         }
     }
 
@@ -41,7 +49,9 @@
 
 <div id="bart-context-menu" bind:this={menu} bind:clientWidth={width} bind:clientHeight={height}>
     {#each options as option}
-    <div class="bart-context-menu-option" on:mouseover={() => handleMenuSelection(option)}>{option.label}</div>
+    <div class="bart-context-menu-option" on:mouseover={() => handleMenuSelection(option)} on:click={() => handleMenuClick(option)}>
+        {option.label}
+    </div>
     {/each}
 </div>
 
