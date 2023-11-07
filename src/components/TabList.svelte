@@ -55,12 +55,17 @@
         if (prevMenu) {
             prevMenu.remove()
         }
+
+        let windowCommands: Menu.MenuEntry[] = Array.from(new Set(filteredTabs.map(tab => { return tab.windowId })))
+            .map((winId) => {
+                return new Menu.MenuEntry(Menu.MenuEntryType.Command, winId+'', () => {})
+            })
         
         new ContextMenu({ target: document.body, props: {x: x, y: y, options: [
             // TODO: Access?
             new Menu.MenuEntry(Menu.MenuEntryType.Submenu, 'Move', 
                 // TODO: Populate with windows from tabs (just by window id)
-                new Menu.Menu([new Menu.MenuEntry(Menu.MenuEntryType.Command, 'Test', () => {})])
+                new Menu.Menu(windowCommands)
             ),
         ]}})
     }

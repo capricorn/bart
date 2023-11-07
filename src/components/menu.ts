@@ -21,9 +21,9 @@ namespace Menu {
     }
 
     export class Menu {
-        entries: [MenuEntry];
+        entries: MenuEntry[];
 
-        constructor(entries: [MenuEntry]) {
+        constructor(entries: MenuEntry[]) {
             this.entries = entries;
         }
     }
