@@ -60,6 +60,7 @@
         border-style: solid;
         max-height: 300px;
         overflow-y: scroll;
+        background-color: white;
     }
 
     .bart-context-menu-option:hover {
