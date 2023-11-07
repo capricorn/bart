@@ -58,6 +58,8 @@
         border-width: 1px;
         border-color: black;
         border-style: solid;
+        max-height: 300px;
+        overflow-y: scroll;
     }
 
     .bart-context-menu-option:hover {
