@@ -63,12 +63,24 @@
                     chrome.tabs.move(Array.from(selectedTabIds), { index: -1, windowId: winId });
                 })
             })
+
+        let moveNewWindowCommand = new Menu.MenuEntry(Menu.MenuEntryType.Command, 'New window', () => {
+            if (selectedTabIds.size < 1) {
+                return;
+            }
+
+            let selectedTabs = Array.from(selectedTabIds);
+
+            chrome.windows.create({focused: true, tabId: selectedTabs[0]}).then(newWin => {
+                chrome.tabs.move(selectedTabs.slice(1), { index: -1, windowId: newWin.id });
+            })
+        });
         
         new ContextMenu({ target: document.body, props: {x: x, y: y, options: [
             // TODO: Access?
             new Menu.MenuEntry(Menu.MenuEntryType.Submenu, 'Move', 
                 // TODO: Populate with windows from tabs (just by window id)
-                new Menu.Menu(windowCommands)
+                new Menu.Menu([ moveNewWindowCommand, ...windowCommands])
             ),
         ]}})
     }
