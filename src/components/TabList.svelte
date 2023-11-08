@@ -82,6 +82,9 @@
                 // TODO: Populate with windows from tabs (just by window id)
                 new Menu.Menu([ moveNewWindowCommand, ...windowCommands])
             ),
+            new Menu.MenuEntry(Menu.MenuEntryType.Command, 'Clear selected', () => {
+                selectedTabIds = new Set();
+            })
         ]}})
     }
 
