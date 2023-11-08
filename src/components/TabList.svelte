@@ -45,6 +45,13 @@
     }
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
+    function globalClickHandler(event: MouseEvent) {
+        // Left-click closes any open context menu
+        if (event.button == 0) {
+            $displayContextMenu = undefined;
+        }
+    }
+
     function buildContextMenuOptions(): Menu.MenuEntry[] {
         let windowCommands: Menu.MenuEntry[] = Array.from(new Set(filteredTabs.map(tab => { return tab.windowId })))
             .map((winId) => {
@@ -404,7 +411,7 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)}/>
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)} on:click={globalClickHandler}/>
 
 <div class="container" >
     <div id="control-header">
