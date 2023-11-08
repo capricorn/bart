@@ -73,7 +73,7 @@
         border-color: black;
         border-style: solid;
         max-height: 300px;
-        overflow-y: scroll;
+        overflow-y: auto;
         background-color: white;
         user-select: none;
     }
