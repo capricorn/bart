@@ -3,6 +3,9 @@
     import * as _ from "lodash";
     import { Bart } from "src/bart/bart";
     import BartHeader from "./BartHeader.svelte";
+    import ContextMenu from "./ContextMenu.svelte";
+    import { Menu } from "./menu";
+    import { writable } from "svelte/store";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -28,6 +31,7 @@
 
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
+    let displayContextMenu = writable(undefined);
 
     $: {
         console.log('Group selection: ' + groupBySelection);
@@ -40,6 +44,57 @@
         }
     }
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
+
+    function globalClickHandler(event: MouseEvent) {
+        // Left-click closes any open context menu
+        if (event.button == 0) {
+            $displayContextMenu = undefined;
+        }
+    }
+
+    function buildContextMenuOptions(): Menu.MenuEntry[] {
+        let windowCommands: Menu.MenuEntry[] = Array.from(new Set(filteredTabs.map(tab => { return tab.windowId })))
+            .map((winId) => {
+                return new Menu.MenuEntry(Menu.MenuEntryType.Command, winId+'', () => {
+                    // Move the selected tabs
+                    chrome.tabs.move(Array.from(selectedTabIds), { index: -1, windowId: winId });
+                })
+            })
+
+        let moveNewWindowCommand = new Menu.MenuEntry(Menu.MenuEntryType.Command, 'New window', () => {
+            if (selectedTabIds.size < 1) {
+                return;
+            }
+
+            let selectedTabs = Array.from(selectedTabIds);
+
+            chrome.windows.create({focused: true, tabId: selectedTabs[0]}).then(newWin => {
+                chrome.tabs.move(selectedTabs.slice(1), { index: -1, windowId: newWin.id });
+            })
+        });
+
+        return [
+            // TODO: Access?
+            new Menu.MenuEntry(Menu.MenuEntryType.Submenu, 'Move', 
+                // TODO: Populate with windows from tabs (just by window id)
+                new Menu.Menu([ moveNewWindowCommand, ...windowCommands])
+            ),
+            new Menu.MenuEntry(Menu.MenuEntryType.Command, 'Clear selected', () => {
+                selectedTabIds = new Set();
+            })
+        ]
+    }
+
+    function selectedContextMenu(e: MouseEvent) {
+        console.log('opening context menu');
+        e.preventDefault();
+
+        console.log(e);
+        let x = e.clientX;
+        let y = e.clientY;
+
+        $displayContextMenu = [x,y];
+    }
 
     function focusFilter() {
         console.log('Focusing filter div');
@@ -356,7 +411,7 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp}/>
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)} on:click={globalClickHandler}/>
 
 <div class="container" >
     <div id="control-header">
@@ -454,6 +509,10 @@
         {/each}
     {/if}
 </div>
+
+{#if $displayContextMenu }
+<ContextMenu x={$displayContextMenu[0]} y={$displayContextMenu[1]} displayMenu={displayContextMenu} options={buildContextMenuOptions()}/>
+{/if}
 
 <style>
     .tab {
