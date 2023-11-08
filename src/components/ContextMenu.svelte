@@ -83,6 +83,7 @@
         max-height: 300px;
         overflow-y: scroll;
         background-color: white;
+        user-select: none;
     }
 
     .bart-context-menu-option:hover {
