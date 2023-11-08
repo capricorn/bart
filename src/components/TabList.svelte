@@ -5,6 +5,7 @@
     import BartHeader from "./BartHeader.svelte";
     import ContextMenu from "./ContextMenu.svelte";
     import { Menu } from "./menu";
+    import { writable } from "svelte/store";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -30,8 +31,7 @@
 
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
-
-    let displayContextMenu: [x: number, y: number] = undefined;
+    let displayContextMenu = writable(undefined);
 
     $: {
         console.log('Group selection: ' + groupBySelection);
@@ -86,7 +86,7 @@
         let x = e.clientX;
         let y = e.clientY;
 
-       displayContextMenu = [x, y];
+        $displayContextMenu = [x,y];
     }
 
     function focusFilter() {
@@ -503,8 +503,8 @@
     {/if}
 </div>
 
-{#if displayContextMenu }
-<ContextMenu x={displayContextMenu[0]} y={displayContextMenu[1]} options={buildContextMenuOptions()}/>
+{#if $displayContextMenu }
+<ContextMenu x={$displayContextMenu[0]} y={$displayContextMenu[1]} displayMenu={displayContextMenu} options={buildContextMenuOptions()}/>
 {/if}
 
 <style>

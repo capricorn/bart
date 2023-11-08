@@ -1,9 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { Menu } from "./menu";
+    import type { Writable } from "svelte/store";
 
     export let x: number;
     export let y: number;
+    export let displayMenu: Writable<[x: number, y: number]>;
 
     let menu: HTMLElement;
     // TODO: Convert to array of MenuEntry
@@ -47,6 +49,7 @@
         if (option.entryType == Menu.MenuEntryType.Command) {
             let command = option.action as Menu.MenuAction;
             command();
+            $displayMenu = undefined;
         }
     }
 
@@ -67,7 +70,7 @@
 <!-- TODO: show set submenu -->
 
 {#if submenu}
-<svelte:self x={x+width} y={y} options={submenu.entries}/>
+<svelte:self x={x+width} y={y} displayMenu={displayMenu} options={submenu.entries}/>
 {/if}
 
 <style>
