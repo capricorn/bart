@@ -33,6 +33,28 @@
     let bartContext: Bart.TabContext = undefined;
     let displayContextMenu = writable(undefined);
 
+    // The initial (x,y) of where the selection rectangle started
+    let tabSelectStartCoord: [x: number, y: number] = undefined;
+    // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
+    let tabSelectEndCoord: [x: number, y: number] = undefined;
+
+    // TODO: Optional handling 
+    $: tabSelectRegionWidth = () => { 
+        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
+            return undefined;
+        }
+
+        return Math.abs(tabSelectStartCoord[0] - tabSelectEndCoord[0]); 
+    }
+
+    $: tabSelectRegionHeight = () => {
+        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
+            return undefined;
+        }
+
+        return Math.abs(tabSelectStartCoord[1] - tabSelectEndCoord[1]);
+    }
+
     $: {
         console.log('Group selection: ' + groupBySelection);
         groupModifier = new Bart.Parser.GroupModifier(groupBySelection);
@@ -44,6 +66,22 @@
         }
     }
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
+
+    function handleContainerMouseDown(event: MouseEvent) {
+        if (event.button != 0) {
+            return;
+        }
+
+        console.log('mouse down event');
+        tabSelectStartCoord = [event.clientX, event.clientY];
+    }
+
+    function handleContainerMouseMove(event: MouseEvent) {
+        // Indicates that a tab selection region is being drawn
+        if (tabSelectStartCoord) {
+            tabSelectEndCoord = [event.clientX, event.clientY];
+        }
+    }
 
     function globalClickHandler(event: MouseEvent) {
         // Left-click closes any open context menu
@@ -413,7 +451,7 @@
 
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)} on:click={globalClickHandler}/>
 
-<div class="container" >
+<div class="container" on:mousedown={handleContainerMouseDown} on:mousemove={handleContainerMouseMove}>
     <div id="control-header">
         <BartHeader tabs={tabs} windows={windows} selectedTabs={selectedTabIds} filteredTabs={filteredTabs}/>
         <div>
@@ -514,7 +552,18 @@
 <ContextMenu x={$displayContextMenu[0]} y={$displayContextMenu[1]} displayMenu={displayContextMenu} options={buildContextMenuOptions()}/>
 {/if}
 
+{#if tabSelectStartCoord != undefined && tabSelectEndCoord != undefined}
+<!-- TODO: Only works in one direction -->
+<div id="tab-selection-div" style="left: {tabSelectStartCoord[0]}px; top: {tabSelectStartCoord[1]}px; width: {tabSelectRegionWidth}px; height: {tabSelectRegionHeight} px"></div>
+{/if}
+
 <style>
+    #tab-selection-div {
+        background: gray;
+        opacity: 0.25;
+        position: absolute;
+    }
+
     .tab {
         font-size: 24px;
         padding-top: 4px;
