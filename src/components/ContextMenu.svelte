@@ -30,18 +30,10 @@
     function handleMenuSelection(option: Menu.MenuEntry) {
         console.log('mouse over menu: ' + option);
 
-        // TODO: Will it work?
-        /*
-        switch (option.entryType) {
-            case Menu.MenuEntryType.Submenu:
-                break;
-            case Menu.MenuEntryType.Command:
-                break;
-        }
-        */
-
         if (option.entryType == Menu.MenuEntryType.Submenu) {
             submenu = option.action as Menu.Menu;
+        } else {
+            submenu = undefined;
         }
     }
 
