@@ -31,6 +31,8 @@
     let filteredTabs = tabs;
     let bartContext: Bart.TabContext = undefined;
 
+    let displayContextMenu: [x: number, y: number] = undefined;
+
     $: {
         console.log('Group selection: ' + groupBySelection);
         groupModifier = new Bart.Parser.GroupModifier(groupBySelection);
@@ -43,19 +45,7 @@
     }
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
-    function selectedContextMenu(e: MouseEvent) {
-        console.log('opening context menu');
-        e.preventDefault();
-
-        console.log(e);
-        let x = e.clientX;
-        let y = e.clientY;
-
-        let prevMenu = document.getElementById('bart-context-menu');
-        if (prevMenu) {
-            prevMenu.remove()
-        }
-
+    function buildContextMenuOptions(): Menu.MenuEntry[] {
         let windowCommands: Menu.MenuEntry[] = Array.from(new Set(filteredTabs.map(tab => { return tab.windowId })))
             .map((winId) => {
                 return new Menu.MenuEntry(Menu.MenuEntryType.Command, winId+'', () => {
@@ -75,8 +65,8 @@
                 chrome.tabs.move(selectedTabs.slice(1), { index: -1, windowId: newWin.id });
             })
         });
-        
-        new ContextMenu({ target: document.body, props: {x: x, y: y, options: [
+
+        return [
             // TODO: Access?
             new Menu.MenuEntry(Menu.MenuEntryType.Submenu, 'Move', 
                 // TODO: Populate with windows from tabs (just by window id)
@@ -85,7 +75,18 @@
             new Menu.MenuEntry(Menu.MenuEntryType.Command, 'Clear selected', () => {
                 selectedTabIds = new Set();
             })
-        ]}})
+        ]
+    }
+
+    function selectedContextMenu(e: MouseEvent) {
+        console.log('opening context menu');
+        e.preventDefault();
+
+        console.log(e);
+        let x = e.clientX;
+        let y = e.clientY;
+
+       displayContextMenu = [x, y];
     }
 
     function focusFilter() {
@@ -501,6 +502,10 @@
         {/each}
     {/if}
 </div>
+
+{#if displayContextMenu }
+<ContextMenu x={displayContextMenu[0]} y={displayContextMenu[1]} options={buildContextMenuOptions()}/>
+{/if}
 
 <style>
     .tab {

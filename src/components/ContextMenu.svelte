@@ -8,12 +8,21 @@
     let menu: HTMLElement;
     // TODO: Convert to array of MenuEntry
     //let options = [ 'Move', 'Close', 'Clear filter' ];
-    export let options: [Menu.MenuEntry];
+    export let options: Menu.MenuEntry[];
 
     let submenu: Menu.Menu = undefined;
 
     let width: number;
     let height: number;
+
+    $: {
+        // TODO: Can style be bound within the view?
+        if (menu) {
+            console.log('Updating menu x/y')
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+        }
+    }
 
     // TODO: Rename to make hover clear
     function handleMenuSelection(option: Menu.MenuEntry) {
