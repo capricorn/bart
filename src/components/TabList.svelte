@@ -39,6 +39,37 @@
     // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
     let tabSelectEndCoord: [x: number, y: number] = undefined;
 
+    // TODO: Find approach that still supports typechecking
+    DOMRect.prototype['overlap'] = function (rect: DOMRect): boolean {
+        let selectMinX = Math.min(this.left, this.right);
+        let selectMinY = Math.min(this.top, this.bottom);
+        let selectMaxX = Math.max(this.left, this.right);
+        let selectMaxY = Math.max(this.top, this.bottom);
+
+        let yOverlap = (rect.top >= selectMinY && rect.bottom <= selectMaxY)    // contained within
+            || (selectMaxY >= rect.top && selectMaxY <= rect.bottom)    // select from top
+            || (selectMinY >= rect.bottom && selectMinY <= rect.top);     // select from bottom
+
+        let xOverlap = (rect.left >= selectMinX && rect.right <= selectMaxX)    // contained within
+            || (selectMaxX >= rect.left && selectMaxX <= rect.right)    // select from left
+            || (selectMinX >= rect.left && selectMinX <= rect.right);     // select from right
+
+        return xOverlap && yOverlap;
+    }
+
+    $: tabSelectRect = (() => {
+        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
+            return undefined;
+        }
+
+        let x = Math.min(tabSelectStartCoord[0], tabSelectEndCoord[0]);
+        let y = Math.min(tabSelectStartCoord[1], tabSelectEndCoord[1]);
+        let width = Math.abs(tabSelectStartCoord[0] - tabSelectEndCoord[0]);
+        let height = Math.abs(tabSelectStartCoord[1] - tabSelectEndCoord[1]);
+
+        return new DOMRect(x, y, width, height);
+    })();
+
     $: {
         console.log('Group selection: ' + groupBySelection);
         groupModifier = new Bart.Parser.GroupModifier(groupBySelection);
@@ -49,18 +80,14 @@
             bartContext.selectedTabIds = selectedTabIds;
         }
     }
+
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
     function handleContainerMouseUp(event: MouseEvent) {
         // Indicates that a tab selection region is being drawn
         if (tabSelectStartCoord) {
-            // Obtain rect. Iterate through all tabs and select whichever intersect.
             // TODO: Filter out tabs that are not currently in the viewport.
             let tabs = document.getElementsByClassName('tab');
-            let selectMinX = Math.min(tabSelectStartCoord[0], tabSelectEndCoord[0]);
-            let selectMaxX = Math.max(tabSelectStartCoord[0], tabSelectEndCoord[0]);
-            let selectMinY = Math.min(tabSelectStartCoord[1], tabSelectEndCoord[1]);
-            let selectMaxY = Math.max(tabSelectStartCoord[1], tabSelectEndCoord[1]);
 
             for (const tab of tabs) {
                 // TODO: Skip aside from filtered tabs
@@ -68,16 +95,7 @@
                 // TODO: Live highlight?
                 let rect = tab.getBoundingClientRect();
 
-                // Cases: Completely contained, partial from top, partial from bottom
-                let yOverlap = (rect.top >= selectMinY && rect.bottom <= selectMaxY)    // contained within
-                    || (selectMaxY >= rect.top && selectMaxY <= rect.bottom)    // select from top
-                    || (selectMinY >= rect.bottom && selectMinY <= rect.top);     // select from bottom
-
-                let xOverlap = (rect.left >= selectMinX && rect.right <= selectMaxX)    // contained within
-                    || (selectMaxX >= rect.left && selectMaxX <= rect.right)    // select from left
-                    || (selectMinX >= rect.left && selectMinX <= rect.right);     // select from right
-
-                if (yOverlap && xOverlap) {
+                if (tabSelectRect['overlap'](rect)) {
                     let tabId = tab.id.replace('tab-', '');
                     console.log(tab.id + '/ overlap: '+tabId);
                     selectedTabIds.add(Number(tabId));
