@@ -400,6 +400,14 @@
         let focusedElement = window.document.activeElement;
         console.log(focusedElement);
 
+        console.log('key down: ' + event.key);
+        if (tabSelectStartCoord && event.key == 'Escape') {
+            // Cancel tab selection 
+            tabSelectStartCoord = undefined;
+            tabSelectEndCoord = undefined;
+            return;
+        }
+
         if (focusedElement.id == "bart-filter") {
             handleFilterInput(event);
         } else {
