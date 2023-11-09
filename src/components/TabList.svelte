@@ -39,20 +39,25 @@
     let tabSelectEndCoord: [x: number, y: number] = undefined;
 
     // TODO: Optional handling 
-    $: tabSelectRegionWidth = () => { 
+    $: tabSelectRegionWidth = (() => { 
         if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
             return undefined;
         }
 
         return Math.abs(tabSelectStartCoord[0] - tabSelectEndCoord[0]); 
-    }
+    })();
 
-    $: tabSelectRegionHeight = () => {
+    $: tabSelectRegionHeight = (() => {
         if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
             return undefined;
         }
 
         return Math.abs(tabSelectStartCoord[1] - tabSelectEndCoord[1]);
+    })();
+
+    $: {
+        console.log('region width: ' + tabSelectRegionWidth);
+        console.log('region height: ' + tabSelectRegionHeight);
     }
 
     $: {
@@ -68,6 +73,8 @@
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
     function handleContainerMouseDown(event: MouseEvent) {
+        event.preventDefault();
+        console.log('mouse event down: ' + event);
         if (event.button != 0) {
             return;
         }
@@ -77,6 +84,8 @@
     }
 
     function handleContainerMouseMove(event: MouseEvent) {
+        event.preventDefault();
+        console.log('mouse move: ' + event);
         // Indicates that a tab selection region is being drawn
         if (tabSelectStartCoord) {
             tabSelectEndCoord = [event.clientX, event.clientY];
@@ -449,9 +458,9 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)} on:click={globalClickHandler}/>
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)} on:click={globalClickHandler} on:mousedown={handleContainerMouseDown} on:mousemove={handleContainerMouseMove}/>
 
-<div class="container" on:mousedown={handleContainerMouseDown} on:mousemove={handleContainerMouseMove}>
+<div class="container" >
     <div id="control-header">
         <BartHeader tabs={tabs} windows={windows} selectedTabs={selectedTabIds} filteredTabs={filteredTabs}/>
         <div>
@@ -554,7 +563,7 @@
 
 {#if tabSelectStartCoord != undefined && tabSelectEndCoord != undefined}
 <!-- TODO: Only works in one direction -->
-<div id="tab-selection-div" style="left: {tabSelectStartCoord[0]}px; top: {tabSelectStartCoord[1]}px; width: {tabSelectRegionWidth}px; height: {tabSelectRegionHeight} px"></div>
+<div id="tab-selection-div" style="left: {tabSelectStartCoord[0]}px; top: {tabSelectStartCoord[1]}px; width: {tabSelectRegionWidth}px; height: {tabSelectRegionHeight}px;"></div>
 {/if}
 
 <style>
