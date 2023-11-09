@@ -1,14 +1,15 @@
 <script lang="ts">
-    // TODO: Simplify?
-    export let tabSelectLeftPx: number;
-    export let tabSelectTopPx: number;
-    export let tabSelectRegionWidth: number;
-    export let tabSelectRegionHeight: number;
+    export let startCoord: [x: number, y: number];
+    export let endCoord: [x: number, y: number];
 
-    // TODO: Computed var -- compute style
+    $: leftPx = Math.min(startCoord[0], endCoord[0]);
+    $: topPx = Math.min(startCoord[1], endCoord[1]);
+
+    $: width = Math.abs(startCoord[0] - endCoord[0]);
+    $: height = Math.abs(startCoord[1] - endCoord[1]);
 </script>
 
-<div id="tab-selection-div" style="left: {tabSelectLeftPx}px; top: {tabSelectTopPx}px; width: {tabSelectRegionWidth}px; height: {tabSelectRegionHeight}px;"></div>
+<div id="tab-selection-div" style="left: {leftPx}px; top: {topPx}px; width: {width}px; height: {height}px;"></div>
 
 <style>
     #tab-selection-div {

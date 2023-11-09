@@ -39,44 +39,6 @@
     // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
     let tabSelectEndCoord: [x: number, y: number] = undefined;
 
-    // TODO: Optional handling 
-    $: tabSelectRegionWidth = (() => { 
-        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
-            return undefined;
-        }
-
-        return Math.abs(tabSelectStartCoord[0] - tabSelectEndCoord[0]); 
-    })();
-
-    $: tabSelectRegionHeight = (() => {
-        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
-            return undefined;
-        }
-
-        return Math.abs(tabSelectStartCoord[1] - tabSelectEndCoord[1]);
-    })();
-
-    $: tabSelectTopPx = (() => {
-        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
-            return undefined;
-        }
-
-        return Math.min(tabSelectStartCoord[1], tabSelectEndCoord[1]);
-    })();
-
-    $: tabSelectLeftPx = (() => {
-        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
-            return undefined;
-        }
-
-        return Math.min(tabSelectStartCoord[0], tabSelectEndCoord[0]);
-    })();
-
-    $: {
-        console.log('region width: ' + tabSelectRegionWidth);
-        console.log('region height: ' + tabSelectRegionHeight);
-    }
-
     $: {
         console.log('Group selection: ' + groupBySelection);
         groupModifier = new Bart.Parser.GroupModifier(groupBySelection);
@@ -625,7 +587,7 @@
 {/if}
 
 {#if tabSelectStartCoord != undefined && tabSelectEndCoord != undefined}
-<SelectionRectangle tabSelectLeftPx={tabSelectLeftPx} tabSelectTopPx={tabSelectTopPx} tabSelectRegionWidth={tabSelectRegionWidth} tabSelectRegionHeight={tabSelectRegionHeight}/>
+<SelectionRectangle startCoord={tabSelectStartCoord} endCoord={tabSelectEndCoord}/>
 {/if}
 
 <style>
