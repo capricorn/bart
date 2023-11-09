@@ -39,6 +39,14 @@
     // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
     let tabSelectEndCoord: [x: number, y: number] = undefined;
 
+    $: cursorStyle = (() => { 
+        if (tabSelectStartCoord) {
+            return "cursor: crosshair;"
+        }
+
+        return "cursor: auto;"
+    })();
+
     enum MouseButtonState {
         up,
         down
@@ -533,7 +541,7 @@
     on:mouseup={handleContainerMouseUp}
     on:mousemove={handleContainerMouseMove}/>
 
-<div class="container" >
+<div class="container" style={cursorStyle}>
     <div id="control-header">
         <BartHeader tabs={tabs} windows={windows} selectedTabs={selectedTabIds} filteredTabs={filteredTabs}/>
         <div>

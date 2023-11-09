@@ -16,5 +16,6 @@
         background: gray;
         opacity: 0.25;
         position: absolute;
+        cursor: crosshair;
     }
 </style>
