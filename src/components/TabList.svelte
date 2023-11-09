@@ -91,6 +91,37 @@
     function handleContainerMouseUp(event: MouseEvent) {
         // Indicates that a tab selection region is being drawn
         if (tabSelectStartCoord) {
+            // Obtain rect. Iterate through all tabs and select whichever intersect.
+            // TODO: Filter out tabs that are not currently in the viewport.
+            let tabs = document.getElementsByClassName('tab');
+            let selectMinX = Math.min(tabSelectStartCoord[0], tabSelectEndCoord[0]);
+            let selectMaxX = Math.max(tabSelectStartCoord[0], tabSelectEndCoord[0]);
+            let selectMinY = Math.min(tabSelectStartCoord[1], tabSelectEndCoord[1]);
+            let selectMaxY = Math.max(tabSelectStartCoord[1], tabSelectEndCoord[1]);
+
+            for (const tab of tabs) {
+                // TODO: Skip aside from filtered tabs
+                // TODO: Ony iterate tabs in viewport
+                // TODO: Live highlight?
+                let rect = tab.getBoundingClientRect();
+
+                // Cases: Completely contained, partial from top, partial from bottom
+                let yOverlap = (rect.top >= selectMinY && rect.bottom <= selectMaxY)    // contained within
+                    || (selectMaxY >= rect.top && selectMaxY <= rect.bottom)    // select from top
+                    || (selectMinY >= rect.bottom && selectMinY <= rect.top);     // select from bottom
+
+                let xOverlap = (rect.left >= selectMinX && rect.right <= selectMaxX)    // contained within
+                    || (selectMaxX >= rect.left && selectMaxX <= rect.right)    // select from left
+                    || (selectMinX >= rect.left && selectMinX <= rect.right);     // select from right
+
+                if (yOverlap && xOverlap) {
+                    let tabId = tab.id.replace('tab-', '');
+                    console.log(tab.id + '/ overlap: '+tabId);
+                    selectedTabIds.add(Number(tabId));
+                    selectedTabIds = new Set(selectedTabIds);
+                }
+            }
+
             tabSelectStartCoord = undefined;
             tabSelectEndCoord = undefined;
         }
@@ -528,7 +559,7 @@
     </div>
     {#if ast.groupModifier.modifier == 'none'}
         {#each filteredTabs as tab (tab.id)}
-            <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
+            <div id="tab-{tab.id}" class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
                 on:click={() => selectTab(tab)} 
                 on:mouseover={() => mouseOverTab(tab)}
                 style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
@@ -549,7 +580,7 @@
         {#each Object.keys(groupedFilteredTabs) as groupKey}
             <h1>{groupKey} ({groupedFilteredTabs[groupKey].length})</h1>
             {#each groupedFilteredTabs[groupKey] as tab (tab.id) }
-                <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
+                <div id="tab-{tab.id}" class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
                     on:click={() => selectTab(tab)} 
                     on:mouseover={() => mouseOverTab(tab)}
                     style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
