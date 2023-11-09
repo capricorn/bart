@@ -39,6 +39,22 @@
     // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
     let tabSelectEndCoord: [x: number, y: number] = undefined;
 
+    enum MouseButtonState {
+        up,
+        down
+    }
+
+    // TODO: Update in window mouse events
+    let mouseState: [left: MouseButtonState, right: MouseButtonState] = [MouseButtonState.down, MouseButtonState.down];
+
+    function debounce(debounceTime: number, guard: () => boolean, action: () => void) {
+        setTimeout(() => {
+            if (guard()) {
+                action();
+            }
+        }, debounceTime);
+    }
+
     // TODO: Find approach that still supports typechecking
     DOMRect.prototype['overlap'] = function (rect: DOMRect): boolean {
         let selectMinX = Math.min(this.left, this.right);
@@ -84,6 +100,12 @@
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
     function handleContainerMouseUp(event: MouseEvent) {
+        if (event.button == 0) {
+            mouseState[0] = MouseButtonState.up;
+        } else if (event.button == 1) {
+            mouseState[1] = MouseButtonState.up;
+        }
+
         // Indicates that a tab selection region is being drawn
         if (tabSelectStartCoord) {
             // TODO: Filter out tabs that are not currently in the viewport.
@@ -109,6 +131,12 @@
     }
 
     function handleContainerMouseDown(event: MouseEvent) {
+        if (event.button == 0) {
+            mouseState[0] = MouseButtonState.down;
+        } else if (event.button == 1) {
+            mouseState[1] = MouseButtonState.down;
+        }
+
         event.preventDefault();
         console.log('mouse event down: ' + event);
         if (event.button != 0) {
@@ -116,7 +144,9 @@
         }
 
         console.log('mouse down event');
-        tabSelectStartCoord = [event.clientX, event.clientY];
+        debounce(300, () => { return mouseState[0] == MouseButtonState.down }, () => {
+            tabSelectStartCoord = [event.clientX, event.clientY];
+        });
     }
 
     function handleContainerMouseMove(event: MouseEvent) {
