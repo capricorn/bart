@@ -88,6 +88,14 @@
     }
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
+    function handleContainerMouseUp(event: MouseEvent) {
+        // Indicates that a tab selection region is being drawn
+        if (tabSelectStartCoord) {
+            tabSelectStartCoord = undefined;
+            tabSelectEndCoord = undefined;
+        }
+    }
+
     function handleContainerMouseDown(event: MouseEvent) {
         event.preventDefault();
         console.log('mouse event down: ' + event);
@@ -474,7 +482,14 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)} on:click={globalClickHandler} on:mousedown={handleContainerMouseDown} on:mousemove={handleContainerMouseMove}/>
+<svelte:window 
+    on:keydown={handleKeyDown} 
+    on:keyup={handleKeyUp} 
+    on:contextmenu={(e)=>selectedContextMenu(e)} 
+    on:click={globalClickHandler} 
+    on:mousedown={handleContainerMouseDown} 
+    on:mouseup={handleContainerMouseUp}
+    on:mousemove={handleContainerMouseMove}/>
 
 <div class="container" >
     <div id="control-header">
