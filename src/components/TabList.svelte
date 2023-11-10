@@ -727,4 +727,8 @@
     :global(.bart-group-modifier) {
         color: blue;
     }
+
+    :global(.bart-macro) {
+        color: gray;
+    }
 </style>

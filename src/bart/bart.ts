@@ -114,6 +114,10 @@ namespace Bart {
                     case TokenType.GroupModifier:
                         bartClass = "bart-group-modifier";
                         break;
+                    case TokenType.Macro:
+                        bartClass = "bart-macro";
+                        break;
+
                 }
 
                 let explodedValue = 
@@ -154,7 +158,8 @@ namespace Bart {
             Negation,
             Combinator,
             Command,
-            GroupModifier
+            GroupModifier,
+            Macro
         }
 
         export function isGroupModifier(token: string): boolean {
@@ -163,6 +168,10 @@ namespace Bart {
 
         export function isString(token: string): boolean {
             return token.startsWith('"') && token.endsWith('"');
+        }
+
+        export function isMacro(token: string): boolean {
+            return token.startsWith('$');
         }
 
         export function isFilter(token: string): boolean {
@@ -259,6 +268,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Command, token.value));
                 } else if (Bart.Lexer.isGroupModifier(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.GroupModifier, token.value));
+                } else if (Bart.Lexer.isMacro(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Macro, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();
