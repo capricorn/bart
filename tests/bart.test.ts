@@ -251,6 +251,7 @@ test('Test string negation', () => {
 });
 
 test('Test parse errors', () => {
+    let context = new Bart.TabContext();
     let parseErrors = [
         '"xyz"',    // no filter provided
         'ur',    // incomplete, TODO: Invalid filter
@@ -259,7 +260,7 @@ test('Test parse errors', () => {
     ];
 
     for (const error of parseErrors) {
-        expect(() => Bart.Parser.parse(error)).toThrow(Bart.Parser.ParseError);
+        expect(() => Bart.Parser.parse(error, context)).toThrow(Bart.Parser.ParseError);
     }
 });
 
@@ -273,7 +274,7 @@ test('Test match all combinator (empty string program)', () => {
     ];
 
     let context = new Bart.TabContext();
-    let ast = Bart.Parser.parse('');
+    let ast = Bart.Parser.parse('', context);
     let filter = ast.filter.filter();
 
     expect(tabs.filter(tab => filter(tab, context)).length).toBe(3);
@@ -314,3 +315,18 @@ test('Test $ (selected) tab filter', () => {
     expect(filteredTabs.length).toBe(1);
     expect(filteredTabs[0].id).toBe(2);
 });
+
+test('Test $windowId macro substition', () => {
+    let context = new Bart.TabContext();
+    context.currentWindowId = 123;
+
+    let tabs = [
+        new Bart.DummyTab('"xyz"', ' ', 123, 1),
+        new Bart.DummyTab('"rst"', ' ', 70, 2),
+    ]
+
+    let filteredTabs = Bart.Interpreter.interpret('windowId $windowId', tabs, context);
+
+    expect(filteredTabs.length).toBe(1);
+    expect(filteredTabs[0].windowId).toBe(123);
+})

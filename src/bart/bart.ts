@@ -812,7 +812,7 @@ namespace Bart {
 
     export namespace Interpreter {
         export function interpret(input: string, tabs: Tab[], context: Context): Tab[] {
-            let ast = Parser.parse(input);
+            let ast = Parser.parse(input, context);
             console.log('==FILTER==');
             console.dir(ast, { depth:  null });
 
