@@ -174,7 +174,7 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr', '$' ].includes(token);
+            return [ 'title', 'url', 'curr', '$', 'windowId' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -466,7 +466,7 @@ namespace Bart {
                         return (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
                     default:
                         let stringFilter = this.arg.filter();
-                        return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]) };
+                        return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]+'') };
                 }
             }
 
