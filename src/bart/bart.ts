@@ -114,6 +114,9 @@ namespace Bart {
                     case TokenType.GroupModifier:
                         bartClass = "bart-group-modifier";
                         break;
+                    case TokenType.Macro:
+                        bartClass = "bart-macro";
+                        break;
                 }
 
                 let explodedValue = 
@@ -154,7 +157,8 @@ namespace Bart {
             Negation,
             Combinator,
             Command,
-            GroupModifier
+            GroupModifier,
+            Macro
         }
 
         export function isGroupModifier(token: string): boolean {
@@ -165,8 +169,12 @@ namespace Bart {
             return token.startsWith('"') && token.endsWith('"');
         }
 
+        export function isMacro(token: string): boolean {
+            return token.startsWith('$');
+        }
+
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr', '$' ].includes(token);
+            return [ 'title', 'url', 'curr', '$', 'windowId' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -259,6 +267,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Command, token.value));
                 } else if (Bart.Lexer.isGroupModifier(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.GroupModifier, token.value));
+                } else if (Bart.Lexer.isMacro(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Macro, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();
@@ -456,7 +466,7 @@ namespace Bart {
                         return (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
                     default:
                         let stringFilter = this.arg.filter();
-                        return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]) };
+                        return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]+'') };
                 }
             }
 
@@ -740,7 +750,28 @@ namespace Bart {
         export function highlight(root: FilterCombinator) {
         }
 
-        export function parse(input: string): Command {
+        // TODO: Enum?
+        function substituteMacro(macro: string, context: Context): Lexer.Token {
+            let substitution = '';
+
+            if (macro == '$windowId') {
+                substitution = `"${context.currentWindowId}"`;
+            }
+
+            return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
+        }
+
+        export function substituteMacros(tokens: Bart.Lexer.Token[], context: Context): Bart.Lexer.Token[] {
+            for (let i = 0; i < tokens.length; i++) {
+                if (tokens[i].type == Bart.Lexer.TokenType.Macro) {
+                    tokens[i] = substituteMacro(tokens[i].value, context);
+                }
+            }
+
+            return tokens;
+        }
+
+        export function parse(input: string, context: Context): Command {
             let command: Command = Command.noop();
             let commandSymbol = command.type;
             let commandArgs = StringCombinator.emptyCombinator;
@@ -750,6 +781,8 @@ namespace Bart {
             }
 
             let tokens = Lexer.lex(input);
+            tokens = substituteMacros(tokens, context);
+            console.log('substituted tokens: ' + tokens.map(f => f.value).join(' '));
 
             // TODO: Move to separate method
             if (Bart.Lexer.isCommand(tokens[0].value)) {
@@ -779,7 +812,7 @@ namespace Bart {
 
     export namespace Interpreter {
         export function interpret(input: string, tabs: Tab[], context: Context): Tab[] {
-            let ast = Parser.parse(input);
+            let ast = Parser.parse(input, context);
             console.log('==FILTER==');
             console.dir(ast, { depth:  null });
 
