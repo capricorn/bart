@@ -6,6 +6,7 @@
     import ContextMenu from "./ContextMenu.svelte";
     import { Menu } from "./menu";
     import { writable } from "svelte/store";
+    import SelectionRectangle from "./SelectionRectangle.svelte";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -33,6 +34,66 @@
     let bartContext: Bart.TabContext = undefined;
     let displayContextMenu = writable(undefined);
 
+    // The initial (x,y) of where the selection rectangle started
+    let tabSelectStartCoord: [x: number, y: number] = undefined;
+    // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
+    let tabSelectEndCoord: [x: number, y: number] = undefined;
+
+    $: cursorStyle = (() => { 
+        if (tabSelectStartCoord) {
+            return "cursor: crosshair;"
+        }
+
+        return "cursor: auto;"
+    })();
+
+    enum MouseButtonState {
+        up,
+        down
+    }
+
+    // TODO: Update in window mouse events
+    let mouseState: [left: MouseButtonState, right: MouseButtonState] = [MouseButtonState.down, MouseButtonState.down];
+
+    function debounce(debounceTime: number, guard: () => boolean, action: () => void) {
+        setTimeout(() => {
+            if (guard()) {
+                action();
+            }
+        }, debounceTime);
+    }
+
+    // TODO: Find approach that still supports typechecking
+    DOMRect.prototype['overlap'] = function (rect: DOMRect): boolean {
+        let selectMinX = Math.min(this.left, this.right);
+        let selectMinY = Math.min(this.top, this.bottom);
+        let selectMaxX = Math.max(this.left, this.right);
+        let selectMaxY = Math.max(this.top, this.bottom);
+
+        let yOverlap = (rect.top >= selectMinY && rect.bottom <= selectMaxY)    // contained within
+            || (selectMaxY >= rect.top && selectMaxY <= rect.bottom)    // select from top
+            || (selectMinY >= rect.bottom && selectMinY <= rect.top);     // select from bottom
+
+        let xOverlap = (rect.left >= selectMinX && rect.right <= selectMaxX)    // contained within
+            || (selectMaxX >= rect.left && selectMaxX <= rect.right)    // select from left
+            || (selectMinX >= rect.left && selectMinX <= rect.right);     // select from right
+
+        return xOverlap && yOverlap;
+    }
+
+    $: tabSelectRect = (() => {
+        if (tabSelectStartCoord == undefined || tabSelectEndCoord == undefined) {
+            return undefined;
+        }
+
+        let x = Math.min(tabSelectStartCoord[0], tabSelectEndCoord[0]);
+        let y = Math.min(tabSelectStartCoord[1], tabSelectEndCoord[1]);
+        let width = Math.abs(tabSelectStartCoord[0] - tabSelectEndCoord[0]);
+        let height = Math.abs(tabSelectStartCoord[1] - tabSelectEndCoord[1]);
+
+        return new DOMRect(x, y, width, height);
+    })();
+
     $: {
         console.log('Group selection: ' + groupBySelection);
         groupModifier = new Bart.Parser.GroupModifier(groupBySelection);
@@ -43,7 +104,67 @@
             bartContext.selectedTabIds = selectedTabIds;
         }
     }
+
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
+
+    function handleContainerMouseUp(event: MouseEvent) {
+        if (event.button == 0) {
+            mouseState[0] = MouseButtonState.up;
+        } else if (event.button == 1) {
+            mouseState[1] = MouseButtonState.up;
+        }
+
+        // Indicates that a tab selection region is being drawn
+        if (tabSelectStartCoord) {
+            // TODO: Filter out tabs that are not currently in the viewport.
+            let tabs = document.getElementsByClassName('tab');
+
+            for (const tab of tabs) {
+                // TODO: Skip aside from filtered tabs
+                // TODO: Ony iterate tabs in viewport
+                // TODO: Live highlight?
+                let rect = tab.getBoundingClientRect();
+
+                if (tabSelectRect['overlap'](rect)) {
+                    let tabId = tab.id.replace('tab-', '');
+                    console.log(tab.id + '/ overlap: '+tabId);
+                    selectedTabIds.add(Number(tabId));
+                    selectedTabIds = new Set(selectedTabIds);
+                }
+            }
+
+            tabSelectStartCoord = undefined;
+            tabSelectEndCoord = undefined;
+        }
+    }
+
+    function handleContainerMouseDown(event: MouseEvent) {
+        if (event.button == 0) {
+            mouseState[0] = MouseButtonState.down;
+        } else if (event.button == 1) {
+            mouseState[1] = MouseButtonState.down;
+        }
+
+        event.preventDefault();
+        console.log('mouse event down: ' + event);
+        if (event.button != 0) {
+            return;
+        }
+
+        console.log('mouse down event');
+        debounce(300, () => { return mouseState[0] == MouseButtonState.down }, () => {
+            tabSelectStartCoord = [event.clientX, event.clientY];
+        });
+    }
+
+    function handleContainerMouseMove(event: MouseEvent) {
+        event.preventDefault();
+        console.log('mouse move: ' + event);
+        // Indicates that a tab selection region is being drawn
+        if (tabSelectStartCoord) {
+            tabSelectEndCoord = [event.clientX, event.clientY];
+        }
+    }
 
     function globalClickHandler(event: MouseEvent) {
         // Left-click closes any open context menu
@@ -279,6 +400,14 @@
         let focusedElement = window.document.activeElement;
         console.log(focusedElement);
 
+        console.log('key down: ' + event.key);
+        if (tabSelectStartCoord && event.key == 'Escape') {
+            // Cancel tab selection 
+            tabSelectStartCoord = undefined;
+            tabSelectEndCoord = undefined;
+            return;
+        }
+
         if (focusedElement.id == "bart-filter") {
             handleFilterInput(event);
         } else {
@@ -411,9 +540,16 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:contextmenu={(e)=>selectedContextMenu(e)} on:click={globalClickHandler}/>
+<svelte:window 
+    on:keydown={handleKeyDown} 
+    on:keyup={handleKeyUp} 
+    on:contextmenu={(e)=>selectedContextMenu(e)} 
+    on:click={globalClickHandler} 
+    on:mousedown={handleContainerMouseDown} 
+    on:mouseup={handleContainerMouseUp}
+    on:mousemove={handleContainerMouseMove}/>
 
-<div class="container" >
+<div class="container" style={cursorStyle}>
     <div id="control-header">
         <BartHeader tabs={tabs} windows={windows} selectedTabs={selectedTabIds} filteredTabs={filteredTabs}/>
         <div>
@@ -450,7 +586,7 @@
     </div>
     {#if ast.groupModifier.modifier == 'none'}
         {#each filteredTabs as tab (tab.id)}
-            <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
+            <div id="tab-{tab.id}" class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
                 on:click={() => selectTab(tab)} 
                 on:mouseover={() => mouseOverTab(tab)}
                 style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
@@ -471,7 +607,7 @@
         {#each Object.keys(groupedFilteredTabs) as groupKey}
             <h1>{groupKey} ({groupedFilteredTabs[groupKey].length})</h1>
             {#each groupedFilteredTabs[groupKey] as tab (tab.id) }
-                <div class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
+                <div id="tab-{tab.id}" class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
                     on:click={() => selectTab(tab)} 
                     on:mouseover={() => mouseOverTab(tab)}
                     style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
@@ -512,6 +648,10 @@
 
 {#if $displayContextMenu }
 <ContextMenu x={$displayContextMenu[0]} y={$displayContextMenu[1]} displayMenu={displayContextMenu} options={buildContextMenuOptions()}/>
+{/if}
+
+{#if tabSelectStartCoord != undefined && tabSelectEndCoord != undefined}
+<SelectionRectangle startCoord={tabSelectStartCoord} endCoord={tabSelectEndCoord}/>
 {/if}
 
 <style>
