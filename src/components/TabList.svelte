@@ -253,7 +253,7 @@
 
     function parseAST(input: string): Bart.Parser.Command {
         try {
-            return Bart.Parser.parse(input);
+            return Bart.Parser.parse(input, bartContext);
         } catch (error) {
             console.log('Failed to parse AST');
             return Bart.Parser.Command.noop();

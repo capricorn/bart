@@ -117,7 +117,6 @@ namespace Bart {
                     case TokenType.Macro:
                         bartClass = "bart-macro";
                         break;
-
                 }
 
                 let explodedValue = 
@@ -751,7 +750,28 @@ namespace Bart {
         export function highlight(root: FilterCombinator) {
         }
 
-        export function parse(input: string): Command {
+        // TODO: Enum?
+        function substituteMacro(macro: string, context: Context): Lexer.Token {
+            let substitution = '';
+
+            if (macro == '$windowId') {
+                substitution = `"${context.currentWindowId}"`;
+            }
+
+            return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
+        }
+
+        export function substituteMacros(tokens: Bart.Lexer.Token[], context: Context): Bart.Lexer.Token[] {
+            for (let i = 0; i < tokens.length; i++) {
+                if (tokens[i].type == Bart.Lexer.TokenType.Macro) {
+                    tokens[i] = substituteMacro(tokens[i].value, context);
+                }
+            }
+
+            return tokens;
+        }
+
+        export function parse(input: string, context: Context): Command {
             let command: Command = Command.noop();
             let commandSymbol = command.type;
             let commandArgs = StringCombinator.emptyCombinator;
@@ -761,6 +781,8 @@ namespace Bart {
             }
 
             let tokens = Lexer.lex(input);
+            tokens = substituteMacros(tokens, context);
+            console.log('substituted tokens: ' + tokens.map(f => f.value).join(' '));
 
             // TODO: Move to separate method
             if (Bart.Lexer.isCommand(tokens[0].value)) {
