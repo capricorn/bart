@@ -26,9 +26,32 @@ namespace Bart {
         id: number
     }
 
+    export interface Storage {
+        get(key: string): Promise<any>;
+        set(items: { [key: string]: any }): Promise<void>;
+        erase(): Promise<void>;
+    }
+
     export interface Context {
         currentWindowId: number
         selectedTabIds: Set<number>;
+        storage: Storage;
+    }
+
+    export class ChromeLocalStorage implements Storage {
+        private storage: chrome.storage.StorageArea = chrome.storage.local; 
+
+        async get(key: string): Promise<any> {
+            return await this.storage.get(key);
+        }
+
+        async set(items: { [key: string]: any }): Promise<void> {
+            this.storage.set(items);
+        }
+
+        async erase() {
+            // TODO
+        }
     }
 
     export class Browser {
@@ -49,6 +72,7 @@ namespace Bart {
     export class TabContext implements Context {
         currentWindowId: number
         selectedTabIds: Set<number>
+        storage: Storage
     }
 
     export class DummyTab implements Tab {
@@ -65,7 +89,7 @@ namespace Bart {
         }
     }
 
-    export type TabFilter = (tab: Tab, context: Context) => boolean;
+    export type TabFilter = (tab: Tab, context: Context) => Promise<boolean>;
     export type StringFilter = (str: string) => boolean;
 
     export namespace Lexer {
@@ -174,7 +198,7 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr', '$', 'windowId' ].includes(token);
+            return [ 'title', 'url', 'curr', '$', 'windowId', 'timestamp' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -461,12 +485,38 @@ namespace Bart {
                 // TODO: Reference enum of defined types..? (Somewhat ugly in TS?) 
                 switch (this.type) {
                     case 'curr':
-                        return (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
+                        return async (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
                     case '$':
-                        return (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
+                        return async (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
+                    case 'timestamp':
+                        return async (tab: Tab, context: Context) => { 
+                            let tabTimestamp = await context.storage.get(tab.id+'');
+                            if (tabTimestamp) {
+                                tabTimestamp = tabTimestamp[tab.id+''];
+                            } else {
+                                tabTimestamp = 0;
+                            }
+
+                            tabTimestamp = tabTimestamp ?? 0;
+
+                            let arg = this.arg.strings[0];
+
+                            if (arg) {
+                                arg = arg.slice(1,-1);
+                                let timestampArg = parseInt(arg);
+
+                                console.log(`timestamp: ${tabTimestamp}, ${timestampArg}`);
+
+                                // TODO: Eventually replace with relation arg / integer support.
+                                // This is just for demonstration.
+                                return tabTimestamp > timestampArg;
+                            }
+
+                            return false;
+                        };
                     default:
                         let stringFilter = this.arg.filter();
-                        return (tab: Tab, context: Context) => { return stringFilter(tab[this.type]+'') };
+                        return async (tab: Tab, context: Context) => { return stringFilter(tab[this.type]+'') };
                 }
             }
 
@@ -503,20 +553,20 @@ namespace Bart {
             }
 
             filter(): TabFilter {
-                return (tab: Tab, context: Context) => {
+                return async (tab: Tab, context: Context) => {
                     // A tab must match all filters
                     let filters = this.filters.map(f => f.filter(context));
                     // TODO: Handle child filter
                     let childResult = this.combinator == '&';   // false for '|' case 
                     if (this.child) {
                         let childFilter = this.child.filter();
-                        childResult = childFilter(tab, context);
+                        childResult = await childFilter(tab, context);
                     }
 
                     if (this.combinator == '&') {
-                        return filters.map(f => f(tab, context)).every(result => result) && childResult;
+                        return (await Promise.all(filters.map(async f => await f(tab, context)))).every(result => result) && childResult;
                     } else if (this.combinator == '|') {
-                        return filters.map(f => f(tab, context)).some(result => result) || childResult;
+                        return (await Promise.all(filters.map(async f => await f(tab, context))).some(result => result)) || childResult;
                     } else {
                         // Interpret error (should be impossible..)
                     }

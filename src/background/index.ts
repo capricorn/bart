@@ -7,3 +7,20 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.action.onClicked.addListener((activeTab) => {
     chrome.tabs.create({url: chrome.runtime.getURL('/src/tablist/tablist.html')});
 })
+
+chrome.tabs.onCreated.addListener((tab) => {
+    console.log('Opened tab: ' + tab.id);
+
+    let timestamp = parseInt(Date.now()/1000);
+
+    let entry = {}
+    entry[tab.id+''] = timestamp;
+
+    console.log(`Tab ${tab.id} entry: ${entry}`);
+    chrome.storage.local.set(entry);
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+    // TODO: Remove from db
+    chrome.storage.local.remove(tabId+'');
+});
