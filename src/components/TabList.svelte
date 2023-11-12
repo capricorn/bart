@@ -264,19 +264,37 @@
     let ast: Bart.Parser.Command = Bart.Parser.Command.noop();
     let groupedFilteredTabs: Record<string, Tab[]> = {};
 
+    async function filterTabs() {
+        let filter = ast.filter.filter();
+
+        //filteredTabs = tabs.filter(async tab => await filter(tab, bartContext));
+        // TODO: Async filter options? (Promise.all() etc?)
+        let displayedTabs = [];
+        for (const tab of tabs) {
+            if (await filter(tab, bartContext)) {
+                displayedTabs.push(tab);
+            }
+        }
+
+        filteredTabs = displayedTabs;
+        console.log('Filter count: ' + displayedTabs.length);
+    }
+
     // TODO: Handle parse error
     $: ast = (groupBySelection == 'none') ? parseAST(bartFilterInput) : parseAST(bartFilterInput).modifier(groupModifier);
     $: console.dir(ast, { depth: null });
     $: {
         console.dir(ast, { depth: null })
-        let filter = ast.filter.filter();
+        filterTabs();
+        /*
         for (const tab of tabs) {
             console.log('"google.com"'.includes(tab['url']));
         }
-        filteredTabs = tabs.filter(tab => filter(tab, bartContext));
+        */
+        //filteredTabs = tabs.filter(tab => filter(tab, bartContext));
 
-        console.log('group modifier:');
-        console.log(ast.groupModifier.group(filteredTabs));
+        //console.log('group modifier:');
+        //console.log(ast.groupModifier.group(filteredTabs));
     }
 
     $: groupedFilteredTabs = ast.groupModifier.group(filteredTabs);
@@ -344,6 +362,7 @@
         console.log(selectedTabIds);
     }
 
+    /*
     function filterTabs(): Tab[] {
         return [...tabs].sort((a,b) => {
             let aHost = new URL(a.url).hostname;
@@ -358,6 +377,7 @@
             }
         })
     }
+    */
 
     function mouseOverTab(tab: Tab) {
         console.log('mouse over tab. meta pressed: ' + metaKeyPressed);
@@ -532,9 +552,11 @@
 
         await fetchTabs();
         await fetchWindows();
+        await filterTabs();
 
         let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
         bartContext.currentWindowId = tab.windowId;
+        bartContext.storage = new Bart.ChromeLocalStorage();
 
         focusFilter();
     })
