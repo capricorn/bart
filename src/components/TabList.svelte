@@ -577,7 +577,6 @@
         <div>
             <label for="bart-filter">Filter</label>
             <div id="bart-filter" on:click={focusFilter} tabindex="0"></div>
-            <button id="bart-execute-button" on:click={executeBartCommand}>Execute</button>
         </div>
         <div id="bart-prettyprint">
             <!-- {@html ast.print()} -->
@@ -605,6 +604,7 @@
         </div>
         
         <button on:click={closeSelectedTabs}>Close selected</button>
+        <button id="bart-execute-button" on:click={executeBartCommand}>Execute</button>
     </div>
     {#if ast.groupModifier.modifier == 'none'}
         {#each filteredTabs as tab (tab.id)}
