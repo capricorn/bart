@@ -727,6 +727,35 @@ namespace Bart {
             return [new StringCombinator('!', [negatedString], []), tokens.slice(2) ];
         }
 
+        export function consumeArithmeticOperators(
+            tokens: Lexer.Token[]
+        ): [result: number, remaining: Lexer.Token[]] {
+            // TODO: Consume until non-valid token
+            // TODO: Safety checks
+            if (tokens.length < 1 || Lexer.isArithmetic(tokens[0].value) == false) {
+                // TODO: What to return for result?
+                return [0, tokens];
+            }
+
+            let operator = tokens[0];
+            let arg1 = tokens[1];
+            let arg2 = tokens[2];
+
+            let op = {
+                '+': (a,b) => a+b,
+                '-': (a,b) => a-b,
+                '*': (a,b) => a*b,
+                '/': (a,b) => Math.floor(a/b)
+            }[operator.value];
+
+            if (Lexer.isArithmetic(arg2.value)) {
+                let [subres, newTokens] = consumeArithmeticOperators(tokens.slice(2));
+                return [op(parseInt(arg1.value), subres), newTokens];
+            } else {
+                return [op(parseInt(arg1.value), parseInt(arg2.value)), tokens.slice(3)];
+            }
+        }
+
         export function consumeStringCombinator(
             tokens: Lexer.Token[]
         ): [result: StringCombinator, remaining: Lexer.Token[]] {
@@ -750,6 +779,11 @@ namespace Bart {
                     let [childCombinator, remainder] = consumeStringCombinator(tokens);
                     tokens = remainder;
                     combinator.children.push(childCombinator);
+                } else if (Lexer.isArithmetic(tokens[0].value)) {
+                    let [result, remainder] = consumeArithmeticOperators(tokens);
+                    console.log('arithmetic result: ' + result);
+                    tokens = remainder;
+                    combinator.strings.push(`"${result}"`);
                 } else {
                     // Parse error?
                     break;
