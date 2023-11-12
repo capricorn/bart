@@ -138,6 +138,9 @@ namespace Bart {
                     case TokenType.GroupModifier:
                         bartClass = "bart-group-modifier";
                         break;
+                    case TokenType.Integer:
+                        bartClass = "bart-integer";
+                        break;
                     case TokenType.Macro:
                         bartClass = "bart-macro";
                         break;
@@ -182,7 +185,8 @@ namespace Bart {
             Combinator,
             Command,
             GroupModifier,
-            Macro
+            Macro,
+            Integer
         }
 
         export function isGroupModifier(token: string): boolean {
@@ -191,6 +195,10 @@ namespace Bart {
 
         export function isString(token: string): boolean {
             return token.startsWith('"') && token.endsWith('"');
+        }
+
+        export function isInteger(token: string): boolean {
+            return /^\d+$/.test(token);
         }
 
         export function isMacro(token: string): boolean {
@@ -293,6 +301,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.GroupModifier, token.value));
                 } else if (Bart.Lexer.isMacro(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Macro, token.value));
+                } else if (Bart.Lexer.isInteger(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Integer, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();

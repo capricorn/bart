@@ -753,4 +753,8 @@
     :global(.bart-macro) {
         color: gray;
     }
+
+    :global(.bart-integer) {
+        color: blue;
+    }
 </style>
