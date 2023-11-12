@@ -707,7 +707,7 @@
     }
 
     #bart-filter {
-        width: 250px;
+        width: 400px;
         height: 20px;
         font-family: monospace;
         font-size: 16px;
