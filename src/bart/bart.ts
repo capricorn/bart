@@ -863,6 +863,14 @@ namespace Bart {
             } else if (macro == '$now') {
                 let now = Math.floor(Date.now()/1000);
                 return new Lexer.Token(0, 0, Lexer.TokenType.Integer, now+'');
+            } else if (macro == '$1d') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60*24)+'');
+            } else if (macro == '$1h') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60)+'');
+            } else if (macro == '$1m') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 60+'');
+            } else if (macro == '$1s') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 1+'');
             }
 
             return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
