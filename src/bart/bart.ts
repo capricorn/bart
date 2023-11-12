@@ -525,11 +525,13 @@ namespace Bart {
                                 arg = arg.slice(1,-1);
                                 let timestampArg = parseInt(arg);
 
-                                console.log(`timestamp: ${tabTimestamp}, ${timestampArg}`);
+                                let relativeTime = Math.floor(Date.now()/1000) - timestampArg;
+
+                                console.log(`timestamp: ${tabTimestamp}, ${relativeTime}`);
 
                                 // TODO: Eventually replace with relation arg / integer support.
                                 // This is just for demonstration.
-                                return tabTimestamp > timestampArg;
+                                return tabTimestamp > relativeTime;
                             }
 
                             return false;
@@ -774,6 +776,10 @@ namespace Bart {
                     combinator.children.push(childCombinator);
                 } else if (Lexer.isString(tokens[0].value)) {
                     combinator.strings.push(tokens[0].value);
+                    tokens = tokens.slice(1);
+                } else if (Lexer.isInteger(tokens[0].value)) {
+                    // For now, cast to string
+                    combinator.strings.push(`"${tokens[0].value}"`);
                     tokens = tokens.slice(1);
                 } else if (isStringCombinatorSequence(tokens)) {
                     let [childCombinator, remainder] = consumeStringCombinator(tokens);
