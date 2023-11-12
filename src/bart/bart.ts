@@ -860,6 +860,9 @@ namespace Bart {
 
             if (macro == '$windowId') {
                 substitution = `"${context.currentWindowId}"`;
+            } else if (macro == '$now') {
+                let now = Math.floor(Date.now()/1000);
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, now+'');
             }
 
             return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
