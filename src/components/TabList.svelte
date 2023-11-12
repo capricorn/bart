@@ -757,4 +757,8 @@
     :global(.bart-integer) {
         color: blue;
     }
+
+    :global(.bart-arithmetic) {
+        color: black;
+    }
 </style>
