@@ -147,6 +147,9 @@ namespace Bart {
                     case TokenType.Macro:
                         bartClass = "bart-macro";
                         break;
+                    case TokenType.TimeUnit:
+                        bartClass = "bart-time-unit";
+                        break;
                 }
 
                 let explodedValue = 
@@ -190,11 +193,19 @@ namespace Bart {
             GroupModifier,
             Macro,
             Integer,
-            Arithmetic
+            Arithmetic,
+            TimeUnit
         }
 
         export function isGroupModifier(token: string): boolean {
             return token == "group";
+        }
+
+        export function isTimeUnit(token: string): boolean {
+            return /^(\d+)d$/.test(token)
+                || /^(\d+)h$/.test(token)
+                || /^(\d+)m$/.test(token)
+                || /^(\d+)s$/.test(token);
         }
 
         export function isString(token: string): boolean {
@@ -214,7 +225,7 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr', '$', 'windowId', 'timestamp' ].includes(token);
+            return [ 'title', 'url', 'curr', '$', 'windowId', 'since' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -313,6 +324,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Integer, token.value));
                 } else if (Bart.Lexer.isArithmetic(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Arithmetic, token.value));
+                } else if (Bart.Lexer.isTimeUnit(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.TimeUnit, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();
@@ -508,7 +521,7 @@ namespace Bart {
                         return async (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
                     case '$':
                         return async (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
-                    case 'timestamp':
+                    case 'since':
                         return async (tab: Tab, context: Context) => { 
                             let tabTimestamp = await context.storage.get(tab.id+'');
                             if (tabTimestamp) {
@@ -525,11 +538,13 @@ namespace Bart {
                                 arg = arg.slice(1,-1);
                                 let timestampArg = parseInt(arg);
 
-                                console.log(`timestamp: ${tabTimestamp}, ${timestampArg}`);
+                                let relativeTime = Math.floor(Date.now()/1000) - timestampArg;
+
+                                console.log(`timestamp: ${tabTimestamp}, ${relativeTime}`);
 
                                 // TODO: Eventually replace with relation arg / integer support.
                                 // This is just for demonstration.
-                                return tabTimestamp > timestampArg;
+                                return tabTimestamp > relativeTime;
                             }
 
                             return false;
@@ -864,26 +879,49 @@ namespace Bart {
 
             if (macro == '$windowId') {
                 substitution = `"${context.currentWindowId}"`;
-            } else if (macro == '$now') {
-                let now = Math.floor(Date.now()/1000);
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, now+'');
-            } else if (macro == '$1d') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60*24)+'');
-            } else if (macro == '$1h') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60)+'');
-            } else if (macro == '$1m') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 60+'');
-            } else if (macro == '$1s') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 1+'');
+                return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
+            }
+        }
+
+        // Convert a time unit to its value in seconds
+        export function substituteTimeUnit(timeUnit: string): Lexer.Token {
+            let parseUnit = /^(\d+)d$/.exec(timeUnit)
+                ?? /^(\d+)h$/.exec(timeUnit)
+                ?? /^(\d+)m$/.exec(timeUnit)
+                ?? /^(\d+)s$/.exec(timeUnit);
+
+            let unit = parseUnit[0].slice(-1);
+            let value = parseInt(parseUnit[1]);
+            let seconds = 0;
+
+            console.log(`time unit: ${unit} value: ${value}`);
+
+            switch (unit) {
+                case 'd':
+                    seconds = 60*60*24*value;
+                    break;
+                case 'h':
+                    seconds = 60*60*value;
+                    break;
+                case 'm':
+                    seconds = 60*value;
+                    break;
+                case 's':
+                    seconds = value;
+                    break;
             }
 
-            return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
+            console.log('seconds: ' + seconds);
+
+            return new Lexer.Token(0, 0, Lexer.TokenType.Integer, seconds+'');
         }
 
         export function substituteMacros(tokens: Bart.Lexer.Token[], context: Context): Bart.Lexer.Token[] {
             for (let i = 0; i < tokens.length; i++) {
                 if (tokens[i].type == Bart.Lexer.TokenType.Macro) {
                     tokens[i] = substituteMacro(tokens[i].value, context);
+                } else if (tokens[i].type == Bart.Lexer.TokenType.TimeUnit) {
+                    tokens[i] = substituteTimeUnit(tokens[i].value);
                 }
             }
 
