@@ -879,26 +879,49 @@ namespace Bart {
 
             if (macro == '$windowId') {
                 substitution = `"${context.currentWindowId}"`;
-            } else if (macro == '$now') {
-                let now = Math.floor(Date.now()/1000);
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, now+'');
-            } else if (macro == '$1d') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60*24)+'');
-            } else if (macro == '$1h') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60)+'');
-            } else if (macro == '$1m') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 60+'');
-            } else if (macro == '$1s') {
-                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 1+'');
+                return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
+            }
+        }
+
+        // Convert a time unit to its value in seconds
+        export function substituteTimeUnit(timeUnit: string): Lexer.Token {
+            let parseUnit = /^(\d+)d$/.exec(timeUnit)
+                ?? /^(\d+)h$/.exec(timeUnit)
+                ?? /^(\d+)m$/.exec(timeUnit)
+                ?? /^(\d+)s$/.exec(timeUnit);
+
+            let unit = parseUnit[0].slice(-1);
+            let value = parseInt(parseUnit[1]);
+            let seconds = 0;
+
+            console.log(`time unit: ${unit} value: ${value}`);
+
+            switch (unit) {
+                case 'd':
+                    seconds = 60*60*24*value;
+                    break;
+                case 'h':
+                    seconds = 60*60*value;
+                    break;
+                case 'm':
+                    seconds = 60*value;
+                    break;
+                case 's':
+                    seconds = value;
+                    break;
             }
 
-            return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
+            console.log('seconds: ' + seconds);
+
+            return new Lexer.Token(0, 0, Lexer.TokenType.Integer, seconds+'');
         }
 
         export function substituteMacros(tokens: Bart.Lexer.Token[], context: Context): Bart.Lexer.Token[] {
             for (let i = 0; i < tokens.length; i++) {
                 if (tokens[i].type == Bart.Lexer.TokenType.Macro) {
                     tokens[i] = substituteMacro(tokens[i].value, context);
+                } else if (tokens[i].type == Bart.Lexer.TokenType.TimeUnit) {
+                    tokens[i] = substituteTimeUnit(tokens[i].value);
                 }
             }
 
