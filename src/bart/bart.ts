@@ -147,6 +147,9 @@ namespace Bart {
                     case TokenType.Macro:
                         bartClass = "bart-macro";
                         break;
+                    case TokenType.TimeUnit:
+                        bartClass = "bart-time-unit";
+                        break;
                 }
 
                 let explodedValue = 
@@ -190,11 +193,19 @@ namespace Bart {
             GroupModifier,
             Macro,
             Integer,
-            Arithmetic
+            Arithmetic,
+            TimeUnit
         }
 
         export function isGroupModifier(token: string): boolean {
             return token == "group";
+        }
+
+        export function isTimeUnit(token: string): boolean {
+            return /^(\d+)d$/.test(token)
+                || /^(\d+)h$/.test(token)
+                || /^(\d+)m$/.test(token)
+                || /^(\d+)s$/.test(token);
         }
 
         export function isString(token: string): boolean {
@@ -313,6 +324,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Integer, token.value));
                 } else if (Bart.Lexer.isArithmetic(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Arithmetic, token.value));
+                } else if (Bart.Lexer.isTimeUnit(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.TimeUnit, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();

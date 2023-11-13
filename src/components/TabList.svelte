@@ -758,6 +758,10 @@
         color: blue;
     }
 
+    :global(.bart-time-unit) {
+        color: blue;
+    }
+
     :global(.bart-arithmetic) {
         color: black;
     }
