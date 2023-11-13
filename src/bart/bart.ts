@@ -214,7 +214,7 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr', '$', 'windowId', 'timestamp' ].includes(token);
+            return [ 'title', 'url', 'curr', '$', 'windowId', 'since' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -508,7 +508,7 @@ namespace Bart {
                         return async (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
                     case '$':
                         return async (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
-                    case 'timestamp':
+                    case 'since':
                         return async (tab: Tab, context: Context) => { 
                             let tabTimestamp = await context.storage.get(tab.id+'');
                             if (tabTimestamp) {
