@@ -138,6 +138,12 @@ namespace Bart {
                     case TokenType.GroupModifier:
                         bartClass = "bart-group-modifier";
                         break;
+                    case TokenType.Integer:
+                        bartClass = "bart-integer";
+                        break;
+                    case TokenType.Arithmetic:
+                        bartClass = "bart-arithmetic";
+                        break;
                     case TokenType.Macro:
                         bartClass = "bart-macro";
                         break;
@@ -182,7 +188,9 @@ namespace Bart {
             Combinator,
             Command,
             GroupModifier,
-            Macro
+            Macro,
+            Integer,
+            Arithmetic
         }
 
         export function isGroupModifier(token: string): boolean {
@@ -191,6 +199,14 @@ namespace Bart {
 
         export function isString(token: string): boolean {
             return token.startsWith('"') && token.endsWith('"');
+        }
+
+        export function isArithmetic(token: string) {
+            return new Set([ '+', '-', '*', '/' ]).has(token);
+        }
+
+        export function isInteger(token: string): boolean {
+            return /^\d+$/.test(token);
         }
 
         export function isMacro(token: string): boolean {
@@ -293,6 +309,10 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.GroupModifier, token.value));
                 } else if (Bart.Lexer.isMacro(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Macro, token.value));
+                } else if (Bart.Lexer.isInteger(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Integer, token.value));
+                } else if (Bart.Lexer.isArithmetic(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Arithmetic, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();
@@ -707,6 +727,35 @@ namespace Bart {
             return [new StringCombinator('!', [negatedString], []), tokens.slice(2) ];
         }
 
+        export function consumeArithmeticOperators(
+            tokens: Lexer.Token[]
+        ): [result: number, remaining: Lexer.Token[]] {
+            // TODO: Consume until non-valid token
+            // TODO: Safety checks
+            if (tokens.length < 1 || Lexer.isArithmetic(tokens[0].value) == false) {
+                // TODO: What to return for result?
+                return [0, tokens];
+            }
+
+            let operator = tokens[0];
+            let arg1 = tokens[1];
+            let arg2 = tokens[2];
+
+            let op = {
+                '+': (a,b) => a+b,
+                '-': (a,b) => a-b,
+                '*': (a,b) => a*b,
+                '/': (a,b) => Math.floor(a/b)
+            }[operator.value];
+
+            if (Lexer.isArithmetic(arg2.value)) {
+                let [subres, newTokens] = consumeArithmeticOperators(tokens.slice(2));
+                return [op(parseInt(arg1.value), subres), newTokens];
+            } else {
+                return [op(parseInt(arg1.value), parseInt(arg2.value)), tokens.slice(3)];
+            }
+        }
+
         export function consumeStringCombinator(
             tokens: Lexer.Token[]
         ): [result: StringCombinator, remaining: Lexer.Token[]] {
@@ -726,10 +775,19 @@ namespace Bart {
                 } else if (Lexer.isString(tokens[0].value)) {
                     combinator.strings.push(tokens[0].value);
                     tokens = tokens.slice(1);
+                } else if (Lexer.isInteger(tokens[0].value)) {
+                    // For now, cast to string
+                    combinator.strings.push(`"${tokens[0].value}"`);
+                    tokens = tokens.slice(1);
                 } else if (isStringCombinatorSequence(tokens)) {
                     let [childCombinator, remainder] = consumeStringCombinator(tokens);
                     tokens = remainder;
                     combinator.children.push(childCombinator);
+                } else if (Lexer.isArithmetic(tokens[0].value)) {
+                    let [result, remainder] = consumeArithmeticOperators(tokens);
+                    console.log('arithmetic result: ' + result);
+                    tokens = remainder;
+                    combinator.strings.push(`"${result}"`);
                 } else {
                     // Parse error?
                     break;
@@ -806,6 +864,17 @@ namespace Bart {
 
             if (macro == '$windowId') {
                 substitution = `"${context.currentWindowId}"`;
+            } else if (macro == '$now') {
+                let now = Math.floor(Date.now()/1000);
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, now+'');
+            } else if (macro == '$1d') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60*24)+'');
+            } else if (macro == '$1h') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, (60*60)+'');
+            } else if (macro == '$1m') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 60+'');
+            } else if (macro == '$1s') {
+                return new Lexer.Token(0, 0, Lexer.TokenType.Integer, 1+'');
             }
 
             return new Lexer.Token(0, 0, Lexer.TokenType.StringArg, substitution);
