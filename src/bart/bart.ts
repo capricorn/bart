@@ -150,6 +150,9 @@ namespace Bart {
                     case TokenType.TimeUnit:
                         bartClass = "bart-time-unit";
                         break;
+                    case TokenType.BinaryRelation:
+                        bartClass = "bart-binary-relation";
+                        break;
                 }
 
                 let explodedValue = 
@@ -194,7 +197,8 @@ namespace Bart {
             Macro,
             Integer,
             Arithmetic,
-            TimeUnit
+            TimeUnit,
+            BinaryRelation
         }
 
         export function isGroupModifier(token: string): boolean {
@@ -206,6 +210,10 @@ namespace Bart {
                 || /^(\d+)h$/.test(token)
                 || /^(\d+)m$/.test(token)
                 || /^(\d+)s$/.test(token);
+        }
+
+        export function isBinaryRelation(token: string): boolean {
+            return new Set(['>', '<', '+', '-', 'in']).has(token);
         }
 
         export function isString(token: string): boolean {
@@ -326,6 +334,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Arithmetic, token.value));
                 } else if (Bart.Lexer.isTimeUnit(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.TimeUnit, token.value));
+                } else if (Bart.Lexer.isBinaryRelation(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.BinaryRelation, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();
