@@ -565,7 +565,7 @@ namespace Bart {
                             tabTimestamp = tabTimestamp ?? 0;
 
                             if (this.arg.relation == 'has') {
-                                this.arg.relation = '>';
+                                this.arg.relation = '<';
                             }
 
                             let combinator = this.arg.filter();
