@@ -26,6 +26,7 @@
 
     let showTabDomain = false;
     let showTabWindow = false;
+    let showTabTimestamp = false;
 
     let lastTabSelected: Tab = undefined;
     let tabRegionEnd: Tab = undefined;
@@ -106,6 +107,11 @@
     }
 
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
+
+    async function timestamp(tab: Tab): Promise<any> {
+        // TODO: Typed approach to this?
+        return await chrome.storage.local.get(tab.id+'');
+    }
 
     function handleContainerMouseUp(event: MouseEvent) {
         if (event.button == 0) {
@@ -601,6 +607,10 @@
                 <input type="checkbox" bind:checked={showTabWindow} />
                 Show window
             </label>
+            <label style="display: block; bottom-padding: 16px">
+                <input type="checkbox" bind:checked={showTabTimestamp} />
+                Show timestamp
+            </label>
         </div>
         
         <button on:click={closeSelectedTabs}>Close selected</button>
@@ -623,6 +633,12 @@
                 <span class="tab-link">Window {tab.windowId}</span>
                 {/if}
 
+                {#if showTabTimestamp}
+                {#await timestamp(tab)}
+                {:then ts}
+                <span class="tab-link">since {ts[tab.id+''] ?? 'n/a'}</span>
+                {/await}
+                {/if}
             </div>
         {/each}
     {:else}
