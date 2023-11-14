@@ -150,6 +150,9 @@ namespace Bart {
                     case TokenType.TimeUnit:
                         bartClass = "bart-time-unit";
                         break;
+                    case TokenType.BinaryRelation:
+                        bartClass = "bart-binary-relation";
+                        break;
                 }
 
                 let explodedValue = 
@@ -194,7 +197,8 @@ namespace Bart {
             Macro,
             Integer,
             Arithmetic,
-            TimeUnit
+            TimeUnit,
+            BinaryRelation
         }
 
         export function isGroupModifier(token: string): boolean {
@@ -206,6 +210,10 @@ namespace Bart {
                 || /^(\d+)h$/.test(token)
                 || /^(\d+)m$/.test(token)
                 || /^(\d+)s$/.test(token);
+        }
+
+        export function isBinaryRelation(token: string): boolean {
+            return new Set(['>', '<', 'has', '==']).has(token);
         }
 
         export function isString(token: string): boolean {
@@ -326,6 +334,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Arithmetic, token.value));
                 } else if (Bart.Lexer.isTimeUnit(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.TimeUnit, token.value));
+                } else if (Bart.Lexer.isBinaryRelation(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.BinaryRelation, token.value));
                 } else {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Invalid, token.value));
                     //throw new Parser.ParseError();
@@ -436,6 +446,7 @@ namespace Bart {
             strings: string[]
             // If there is a nested combinator it is pointed to here
             children: StringCombinator[]
+            relation: string;
 
             constructor(
                 combinator: string,
@@ -446,6 +457,7 @@ namespace Bart {
                 this.combinator = combinator;
                 this.strings = strings.map(s => s.value);
                 this.children = children;
+                this.relation = 'has';
             }
 
             print(): string {
@@ -456,16 +468,35 @@ namespace Bart {
                 return result;
             }
 
+            private get operator(): ((a: string, b: string) => boolean) {
+                switch (this.relation) {
+                    case '==':
+                        return (a: string, b: string) => a == b;
+                    case '>':
+                        return (a: string, b: string) => parseInt(a) > parseInt(b);
+                    case '<':
+                        return (a: string, b: string) => parseInt(a) < parseInt(b);
+                    default:
+                        return (a: string, b:string) => a.includes(b);
+                }
+            }
+
             filter(): StringFilter {
                 let stringMatcher: StringFilter = (str: string) => {
-                    // **TODO: Handle children as part of matches as well**
-                    str = str.toLowerCase();
-                    let matches = this.strings.map(s => str.includes(s.toLowerCase().slice(1,-1)))
+                    let op = this.operator;
+                    let cast = (t) => t;
+
+                    if (this.relation == '<' || this.relation == '>') {
+                        cast = (t) => parseInt(t);
+                    }
+
+                    str = cast(str.toLowerCase());
+                    let matches = this.strings.map(s => op(str, cast(s.toLowerCase().slice(1,-1))));
 
                     // Negation can _only_ bind to a single string
                     if (this.combinator == '!') {
                         console.log('String combinator negation: ' + this.strings);
-                        return !str.includes(this.strings[0].toLowerCase().slice(1,-1));
+                        return !op(str, cast(this.strings[0].toLowerCase().slice(1,-1)));
                     }
 
                     for (const child of this.children) {
@@ -530,24 +561,17 @@ namespace Bart {
                                 tabTimestamp = 0;
                             }
 
+                            let now = Math.floor(Date.now()/1000);
                             tabTimestamp = tabTimestamp ?? 0;
 
-                            let arg = this.arg.strings[0];
-
-                            if (arg) {
-                                arg = arg.slice(1,-1);
-                                let timestampArg = parseInt(arg);
-
-                                let relativeTime = Math.floor(Date.now()/1000) - timestampArg;
-
-                                console.log(`timestamp: ${tabTimestamp}, ${relativeTime}`);
-
-                                // TODO: Eventually replace with relation arg / integer support.
-                                // This is just for demonstration.
-                                return tabTimestamp > relativeTime;
+                            if (this.arg.relation == 'has') {
+                                this.arg.relation = '<';
                             }
 
-                            return false;
+                            let combinator = this.arg.filter();
+                            let elapsedTime = now - tabTimestamp;
+
+                            return combinator(elapsedTime+'');
                         };
                     default:
                         let stringFilter = this.arg.filter();
@@ -841,9 +865,16 @@ namespace Bart {
                         continue;
                     }
 
+                    // Relations can directly precede combinators
+                    let relation = 'has';
+                    if (Lexer.isBinaryRelation(tokens[0].value)) {
+                        relation = tokens[0].value;
+                        tokens = tokens.slice(1);
+                    }
+
                     // Consume filter args; loop until all filters are consumed.
-                    // Stuck here
                     let [filterArg, remainder] = consumeStringCombinator(tokens);
+                    filterArg.relation = relation;
                     tokens = remainder;
                     console.log('filter remaining tokens: ' + tokens[0]);
                     filters.push(new Filter(filterType, filterArg));

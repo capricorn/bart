@@ -781,4 +781,8 @@
     :global(.bart-arithmetic) {
         color: black;
     }
+
+    :global(.bart-binary-relation) {
+        color: black;
+    }
 </style>
