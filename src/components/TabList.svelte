@@ -416,7 +416,7 @@
         }
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = '<span>bart> </span>' + Bart.Lexer.highlight(bartFilterInput) + lastSlotHTML;
+        filterDiv.innerHTML = '<span></span>' + Bart.Lexer.highlight(bartFilterInput) + lastSlotHTML;
 
         document.getElementById('bart-filter-last-slot').style.opacity = (inputCursorPosition == bartFilterInput.length) ? '1.0' : '0.0';
         console.log('filter input: ' + bartFilterInput);
@@ -554,7 +554,7 @@
         bartContext = new Bart.TabContext();
 
         let filterDiv = document.getElementById('bart-filter');
-        filterDiv.innerHTML = '<span>bart> </span>' + lastSlotHTML;
+        filterDiv.innerHTML = '<span></span>' + lastSlotHTML;
 
         await fetchTabs();
         await fetchWindows();
