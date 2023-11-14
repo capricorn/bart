@@ -471,7 +471,10 @@
     }
 
     function selectTab(tab: Tab) {
+        console.log('select tab');
         console.log(selectedTabIds);
+        document.getElementById('bart-filter').blur();
+
         if (metaKeyPressed) {
             console.log('switching to tab');
             chrome.tabs.update(tab.id, { active: true })
@@ -577,7 +580,7 @@
     on:mouseup={handleContainerMouseUp}
     on:mousemove={handleContainerMouseMove}/>
 
-<div class="container" style={cursorStyle}>
+<div id="container" style={cursorStyle}>
     <div id="control-header">
         <BartHeader tabs={tabs} windows={windows} selectedTabs={selectedTabIds} filteredTabs={filteredTabs}/>
         <div>
