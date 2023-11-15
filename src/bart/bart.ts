@@ -233,7 +233,7 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr', '$', 'windowId', 'since' ].includes(token);
+            return [ 'title', 'url', 'curr', '$', 'windowId', 'since', 'uniq' ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -531,6 +531,8 @@ namespace Bart {
             type: string
             arg: StringCombinator
 
+            cachedFilter: TabFilter | undefined;
+
             constructor(
                 type: string,
                 arg: StringCombinator
@@ -538,6 +540,7 @@ namespace Bart {
                 super();
                 this.type = type;
                 this.arg = arg;
+                this.cachedFilter = undefined;
             }
 
             print(): string {
@@ -546,36 +549,66 @@ namespace Bart {
             }
 
             filter(context: Context): TabFilter {
-                // TODO: Reference enum of defined types..? (Somewhat ugly in TS?) 
-                switch (this.type) {
-                    case 'curr':
-                        return async (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
-                    case '$':
-                        return async (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
-                    case 'since':
-                        return async (tab: Tab, context: Context) => { 
-                            let tabTimestamp = await context.storage.get(tab.id+'');
-                            if (tabTimestamp) {
-                                tabTimestamp = tabTimestamp[tab.id+''];
-                            } else {
-                                tabTimestamp = 0;
+                if (this.cachedFilter) {
+                    console.log('Hit cached filter');
+                    return this.cachedFilter;
+                } else {
+                    console.log('Setting filter');
+                    // TODO: Reference enum of defined types..? (Somewhat ugly in TS?) 
+                    switch (this.type) {
+                        case 'uniq':
+                            let statefulFilter = () => {
+                                console.log('Building stateful filter');
+                                const prev = new Set();
+                                return async (tab: Tab, context: Context): Promise<boolean> => {
+                                    console.log('running uniq filter');
+                                    console.log('prev set: ' + prev);
+                                    if (prev.has(tab.id+'')) {
+                                        return false;
+                                    }
+
+                                    prev.add(tab.id+'');
+                                    return true;
+                                }
                             }
 
-                            let now = Math.floor(Date.now()/1000);
-                            tabTimestamp = tabTimestamp ?? 0;
+                            this.cachedFilter = statefulFilter();
+                            break;
+                        case 'curr':
+                            this.cachedFilter = async (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
+                            break;
+                        case '$':
+                            this.cachedFilter = async (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
+                            break;
+                        case 'since':
+                            this.cachedFilter = async (tab: Tab, context: Context) => { 
+                                let tabTimestamp = await context.storage.get(tab.id+'');
+                                if (tabTimestamp) {
+                                    tabTimestamp = tabTimestamp[tab.id+''];
+                                } else {
+                                    tabTimestamp = 0;
+                                }
 
-                            if (this.arg.relation == 'has') {
-                                this.arg.relation = '<';
-                            }
+                                let now = Math.floor(Date.now()/1000);
+                                tabTimestamp = tabTimestamp ?? 0;
 
-                            let combinator = this.arg.filter();
-                            let elapsedTime = now - tabTimestamp;
+                                if (this.arg.relation == 'has') {
+                                    this.arg.relation = '<';
+                                }
 
-                            return combinator(elapsedTime+'');
-                        };
-                    default:
-                        let stringFilter = this.arg.filter();
-                        return async (tab: Tab, context: Context) => { return stringFilter(tab[this.type]+'') };
+                                let combinator = this.arg.filter();
+                                let elapsedTime = now - tabTimestamp;
+
+                                return combinator(elapsedTime+'');
+                            };
+                            break;
+                        default:
+                            let stringFilter = this.arg.filter();
+                            this.cachedFilter = async (tab: Tab, context: Context) => { return stringFilter(tab[this.type]+'') };
+                            break;
+                    }
+
+                    return this.cachedFilter;
                 }
             }
 
@@ -589,6 +622,9 @@ namespace Bart {
             filters: Filter[]
             child?: FilterCombinator
 
+            cachedFilter: TabFilter | undefined;
+            cachedFilters: TabFilter[] | undefined;
+
             constructor(
                 combinator: string,
                 filters: Filter[],
@@ -598,6 +634,7 @@ namespace Bart {
                 this.combinator = combinator;
                 this.filters = filters;
                 this.child = child;
+                this.cachedFilter = undefined;
             }
 
             print(): string {
@@ -612,23 +649,40 @@ namespace Bart {
             }
 
             filter(): TabFilter {
-                return async (tab: Tab, context: Context) => {
-                    // A tab must match all filters
-                    let filters = this.filters.map(f => f.filter(context));
-                    // TODO: Handle child filter
-                    let childResult = this.combinator == '&';   // false for '|' case 
-                    if (this.child) {
-                        let childFilter = this.child.filter();
-                        childResult = await childFilter(tab, context);
+                if (this.cachedFilter) {
+                    console.log('Hit cached combinator filter');
+                    return this.cachedFilter;
+                } else {
+                    console.log('setting combinator filter cache');
+                    console.log('filter combinator: %o', this);
+                    this.cachedFilter = async (tab: Tab, context: Context) => {
+                        // A tab must match all filters
+                        if (this.cachedFilters == undefined) {
+                            this.cachedFilters = this.filters.map(f => f.filter(context));
+                        }
+
+                        let filters = this.cachedFilters;
+                        // TODO: Handle child filter
+                        let childResult = this.combinator == '&';   // false for '|' case 
+                        if (this.child) {
+                            let childFilter = this.child.filter();
+                            childResult = await childFilter(tab, context);
+                        }
+
+                        console.log('& Combinator filter computation');
+                        if (this.combinator == '&') {
+                            let promises: Promise<boolean>[] = filters.map(f => f(tab, context));
+                            let results: boolean[] = await Promise.all(promises);
+                            console.log('results: %o', results);
+                            return results.every(result => result) && childResult;
+                        } else if (this.combinator == '|') {
+                            return (await Promise.all(filters.map(f => f(tab, context)))).some(result => result) || childResult;
+                        } else {
+                            // Interpret error (should be impossible..)
+                        }
                     }
 
-                    if (this.combinator == '&') {
-                        return (await Promise.all(filters.map(async f => await f(tab, context)))).every(result => result) && childResult;
-                    } else if (this.combinator == '|') {
-                        return (await Promise.all(filters.map(async f => await f(tab, context))).some(result => result)) || childResult;
-                    } else {
-                        // Interpret error (should be impossible..)
-                    }
+                    return this.cachedFilter;
                 }
             }
         }
@@ -639,7 +693,7 @@ namespace Bart {
             }
 
             override filter(): TabFilter {
-                return (tab) => true;
+                return async (tab) => true;
             }
         }
 
