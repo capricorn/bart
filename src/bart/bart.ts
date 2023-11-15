@@ -563,7 +563,7 @@ namespace Bart {
                                 console.log('Building stateful filter');
                                 const prev = new Set();
                                 return async (tab: Tab, context: Context): Promise<boolean> => {
-                                    let field = 'id';
+                                    let field = 'url';
                                     if (this.arg.strings.length > 0) {
                                         field = this.arg.strings[0].slice(1,-1);
                                     }

@@ -9,9 +9,9 @@ test('lazy decorator test', () => {
 });
 */
 
-test('uniq test', async () => {
+test('uniq state test', async () => {
     let context = new Bart.TabContext();
-    let ast = Bart.Parser.parse('uniq', context);
+    let ast = Bart.Parser.parse('uniq "id"', context);
 
     let filter = ast.filter.filter();
     //console.log('Filter: ' + ast.filter.print());
@@ -26,7 +26,7 @@ test('uniq test', async () => {
     expect(await filter(tab2, context)).toBe(false);
 });
 
-test('uniq test specified field', async () => {
+test('uniq test url field', async () => {
     let context = new Bart.TabContext();
     let ast = Bart.Parser.parse('uniq "url"', context);
 
