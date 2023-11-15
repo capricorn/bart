@@ -24,6 +24,8 @@ namespace Bart {
         url: string
         windowId: number
         id: number
+
+        [field: string]: any;
     }
 
     export interface Storage {
@@ -561,13 +563,16 @@ namespace Bart {
                                 console.log('Building stateful filter');
                                 const prev = new Set();
                                 return async (tab: Tab, context: Context): Promise<boolean> => {
-                                    console.log('running uniq filter');
-                                    console.log('prev set: ' + prev);
-                                    if (prev.has(tab.id+'')) {
+                                    let field = 'id';
+                                    if (this.arg.strings.length > 0) {
+                                        field = this.arg.strings[0].slice(1,-1);
+                                    }
+
+                                    if (prev.has(tab[field]+'')) {
                                         return false;
                                     }
 
-                                    prev.add(tab.id+'');
+                                    prev.add(tab[field]+'');
                                     return true;
                                 }
                             }

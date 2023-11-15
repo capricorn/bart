@@ -275,6 +275,7 @@
 
         //filteredTabs = tabs.filter(async tab => await filter(tab, bartContext));
         // TODO: Async filter options? (Promise.all() etc?)
+        console.log("Filter tabs: %o", ast.filter);
         let displayedTabs = [];
         for (const tab of tabs) {
             if (await filter(tab, bartContext)) {
@@ -288,7 +289,7 @@
 
     // TODO: Handle parse error
     $: ast = (groupBySelection == 'none') ? parseAST(bartFilterInput) : parseAST(bartFilterInput).modifier(groupModifier);
-    $: console.dir(ast, { depth: null });
+    $: console.log("AST: %o", ast);
     $: {
         console.dir(ast, { depth: null })
         filterTabs();
