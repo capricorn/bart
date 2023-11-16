@@ -207,6 +207,10 @@ namespace Bart {
             return token == "group";
         }
 
+        export function isSortModifier(token: string): boolean {
+            return token == 'sort';
+        }
+
         export function isTimeUnit(token: string): boolean {
             return /^(\d+)d$/.test(token)
                 || /^(\d+)h$/.test(token)
@@ -394,6 +398,16 @@ namespace Bart {
 
     export namespace Parser {
         export class ParseError extends Error {}
+
+        export class SortModifier {
+            field: string;
+            relation: string;
+
+            constructor(field: string, relation: string) {
+                this.field = field;
+                this.relation = relation;
+            }
+        }
 
         export class GroupModifier {
             modifier: string;
@@ -707,6 +721,7 @@ namespace Bart {
             args: StringCombinator | undefined
             filter: FilterCombinator | undefined
             groupModifier: GroupModifier;
+            sortModifier: SortModifier | undefined;
             browser: Browser;
 
             constructor(
@@ -714,6 +729,7 @@ namespace Bart {
                 args: StringCombinator | undefined,
                 filter: FilterCombinator | undefined,
                 groupModifier: GroupModifier = GroupModifier.none,
+                sortModifier: SortModifier | undefined = undefined,
                 browser: Browser = new Browser()
             ) {
                 super();
@@ -721,6 +737,7 @@ namespace Bart {
                 this.args = args;
                 this.filter = filter;
                 this.groupModifier = groupModifier;
+                this.sortModifier = sortModifier;
                 this.browser = browser;
             }
 
@@ -752,7 +769,7 @@ namespace Bart {
 
             static noop(browser: Browser = new Browser()): Command {
                 let filter = new MatchAllFilterCombinator();
-                return new Command('.', StringCombinator.emptyCombinator, filter, GroupModifier.none, browser);
+                return new Command('.', StringCombinator.emptyCombinator, filter, GroupModifier.none, undefined, browser);
             }
 
             modifier(mod: GroupModifier): Command {
@@ -761,6 +778,7 @@ namespace Bart {
                     this.args,
                     this.filter,
                     mod,
+                    undefined,
                     this.browser
                 );
             }
@@ -802,7 +820,29 @@ namespace Bart {
             return Lexer.isCombinator(tokens[0].value) && Lexer.isFilter(tokens[1].value);
         }
 
-        export function consumeGroupModifier(tokens: Lexer.Token[]): GroupModifier {
+        export function consumeSortModifier(tokens: Lexer.Token[]): [remaining: Lexer.Token[], modifier: SortModifier] {
+            if (Lexer.isSortModifier(tokens[0].value) == false) {
+                throw new ParseError();
+            }
+
+            tokens = tokens.slice(1);
+            let relation = '<';
+            let field = 'timestamp';
+
+            // TODO: Pattern matching?
+            if (tokens.length >= 2 && Lexer.isString(tokens[0].value) && Lexer.isString(tokens[1].value)) {
+                relation = tokens[0].value.slice(1,-1);
+                field = tokens[1].value.slice(1,-1);
+                tokens = tokens.slice(2);
+            } else if (tokens.length >= 1 && Lexer.isString(tokens[0].value)) {
+                relation = tokens[0].value.slice(1,-1);
+                tokens = tokens.slice(1);
+            }
+
+            return [tokens, new SortModifier(field, relation)];
+        }
+
+        export function consumeGroupModifier(tokens: Lexer.Token[]): [remaining: Lexer.Token[], modifier: GroupModifier] {
             // The first token will be 'group'
             if (Bart.Lexer.isGroupModifier(tokens[0].value) == false) {
                 throw new ParseError();
@@ -814,7 +854,9 @@ namespace Bart {
                 throw new ParseError();
             }
 
-            return new GroupModifier(tokens[0].value.slice(1,-1));
+            let modifier = new GroupModifier(tokens[0].value.slice(1,-1));
+            // Skip the arg
+            return [tokens.slice(1), modifier];
         }
 
         // TODO
@@ -943,7 +985,7 @@ namespace Bart {
                     // Should have consumed all tokens here
                     tokens = remainder;
                     break;
-                } else if (Bart.Lexer.isGroupModifier(tokens[0].value)) {
+                } else if (Bart.Lexer.isGroupModifier(tokens[0].value) || Lexer.isSortModifier(tokens[0].value)) {
                     break;
                 } else {
                     throw new ParseError();
@@ -1042,18 +1084,28 @@ namespace Bart {
             // A command w/out a filter assumes the match-all filter
             let filterCombinator = Filter.matchAllFilter;
             let groupModifier = GroupModifier.none;
+            let sortModifier = undefined;
 
             if (tokens.length > 0) {
                 [filterCombinator, tokens] = consumeFilterCombinator(tokens);
             }
 
+            // After all tokens are parsed, group or sort modifier
             // If there is a group modifier it will remain after all other tokens are parsed.
-            if (tokens.length > 0) {
-                groupModifier = consumeGroupModifier(tokens);
-                console.log('Parsing group modifier');
+            // Allow group or sort modifier regardless of order
+            while (tokens.length > 0) {
+                if (tokens[0].value == 'group') {
+                    [tokens, groupModifier] = consumeGroupModifier(tokens);
+                    console.log('Parsing group modifier');
+                } else if (tokens[0].value == 'sort') {
+                    // TODO: Consume sort modifier
+                    [tokens, sortModifier] = consumeSortModifier(tokens);
+                } else {
+                    break;
+                }
             }
 
-            return new Command(commandSymbol, commandArgs, filterCombinator, groupModifier);
+            return new Command(commandSymbol, commandArgs, filterCombinator, groupModifier, sortModifier);
         }
     }
 
