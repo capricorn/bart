@@ -39,6 +39,52 @@ test('[Util] Test async sort', async () => {
     expect(result).toStrictEqual([0,1,1,1,3,5]);
 });
 
+test('[Util] Test SortModifier timestamp sort', async () => {
+    // TODO: Add to mocks / tests top-level for import?
+    class DummyStorage implements Bart.Storage {
+        keys: { [key: string]: any };
+
+        constructor() {
+            this.keys = {};
+        }
+
+        get(key: string): Promise<any> {
+            return this.keys[key];
+        }
+
+        set(items: { [key: string]: any; }): Promise<void> {
+            for (const [key,_] of Object.entries(items)) {
+                this.keys[key] = items[key];
+            }
+
+            return;
+        }
+
+        erase(): Promise<void> {
+            return;
+        }
+    }
+
+    let storage = new DummyStorage();
+    let modifier = new Bart.Parser.SortModifier('timestamp', '<', storage);
+
+    // Tab ids, timestamp
+    await storage.set({'1': '100'})
+    await storage.set({'2': '200'})
+    await storage.set({'3': '1000'})
+
+    let tabs: Bart.DummyTab[] = [
+        new Bart.DummyTab('', '', 0, 2),
+        new Bart.DummyTab('', '', 0, 3),
+        new Bart.DummyTab('', '', 0, 1),
+    ];
+
+    let results = await modifier.sort(tabs);
+
+    expect(results[0].id).toBe(1);
+    expect(results[2].id).toBe(3);
+});
+
 test('uniq state test', async () => {
     let context = new Bart.TabContext();
     let ast = Bart.Parser.parse('uniq "id"', context);

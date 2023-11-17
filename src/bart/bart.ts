@@ -17,6 +17,9 @@
  * Note: Combinator classification depends on immediate following arg
  */
 
+import { storage } from "src/storage";
+import { Util } from "./util";
+
 // First step: tokenize
 namespace Bart {
     export interface Tab {
@@ -402,17 +405,37 @@ namespace Bart {
         export class SortModifier {
             field: string;
             relation: string;
+            storage: Storage;
 
-            constructor(field: string, relation: string) {
+            constructor(field: string, relation: string, storage: Storage = new ChromeLocalStorage()) {
                 this.field = field;
                 this.relation = relation;
+                this.storage = storage;
             }
 
-            // TODO: Needs context if interested in sorting on timestamp (better way?)
-            // Problem: must be async -- since reading tab timestamp is an async op
-            async comparator(a: Tab, b: Tab): Promise<boolean> {
+            buildComparator(): Util.AsyncComparator<Tab> {
+                let relation = (a,b) => a < b;
+                if (this.relation == '>') {
+                    relation = (a,b) => a > b;
+                }
 
-                return false;
+                if (this.field == 'timestamp') {
+                    return async (a,b) => {
+                        let aTimestamp = parseInt(await this.storage.get(a.id+''));
+                        let bTimestamp = parseInt(await this.storage.get(b.id+''));
+
+                        return relation(aTimestamp, bTimestamp);
+                    }
+                } else {
+                    return async (a,b) => {
+                        return relation(a,b);
+                    }
+                }
+            }
+
+            async sort(tabs: Tab[]): Promise<Tab[]> {
+                let comparator = this.buildComparator();
+                return await Util.asyncSort(tabs, comparator);
             }
         }
 
