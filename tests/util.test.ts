@@ -9,6 +9,36 @@ test('lazy decorator test', () => {
 });
 */
 
+test('[Util] Test async minimal', async () => {
+    let arr = [1,4,2,5];
+    let comparator: Util.AsyncComparator<number> = async (a,b) => {
+        return a < b;
+    };
+
+    let result = await Util.asyncMinimal(arr, comparator);
+    expect(result).toBe(1);
+});
+
+test('[Util] Test async arg minimal', async () => {
+    let arr = [1,1,1,3,0,5];
+    let comparator: Util.AsyncComparator<number> = async (a,b) => {
+        return a < b;
+    };
+
+    let result = await Util.asyncArgMinimal(arr, comparator);
+    expect(result).toBe(4);
+});
+
+test('[Util] Test async sort', async () => {
+    let arr = [1,1,1,3,0,5];
+    let comparator: Util.AsyncComparator<number> = async (a,b) => {
+        return a < b;
+    };
+
+    let result = await Util.asyncSort(arr, comparator);
+    expect(result).toStrictEqual([0,1,1,1,3,5]);
+});
+
 test('uniq state test', async () => {
     let context = new Bart.TabContext();
     let ast = Bart.Parser.parse('uniq "id"', context);

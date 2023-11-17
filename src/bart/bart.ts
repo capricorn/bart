@@ -407,6 +407,13 @@ namespace Bart {
                 this.field = field;
                 this.relation = relation;
             }
+
+            // TODO: Needs context if interested in sorting on timestamp (better way?)
+            // Problem: must be async -- since reading tab timestamp is an async op
+            async comparator(a: Tab, b: Tab): Promise<boolean> {
+
+                return false;
+            }
         }
 
         export class GroupModifier {
