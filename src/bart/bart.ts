@@ -850,7 +850,7 @@ namespace Bart {
             return Lexer.isCombinator(tokens[0].value) && Lexer.isFilter(tokens[1].value);
         }
 
-        export function consumeSortModifier(tokens: Lexer.Token[]): [remaining: Lexer.Token[], modifier: SortModifier] {
+        export function consumeSortModifier(tokens: Lexer.Token[], storage: Storage = new ChromeLocalStorage()): [remaining: Lexer.Token[], modifier: SortModifier] {
             if (Lexer.isSortModifier(tokens[0].value) == false) {
                 throw new ParseError();
             }
@@ -869,7 +869,7 @@ namespace Bart {
                 tokens = tokens.slice(1);
             }
 
-            return [tokens, new SortModifier(field, relation)];
+            return [tokens, new SortModifier(field, relation, storage)];
         }
 
         export function consumeGroupModifier(tokens: Lexer.Token[]): [remaining: Lexer.Token[], modifier: GroupModifier] {
@@ -1090,7 +1090,7 @@ namespace Bart {
             return tokens;
         }
 
-        export function parse(input: string, context: Context): Command {
+        export function parse(input: string, context: Context, storage: Storage = new ChromeLocalStorage()): Command {
             let command: Command = Command.noop();
             let commandSymbol = command.type;
             let commandArgs = StringCombinator.emptyCombinator;
@@ -1129,7 +1129,7 @@ namespace Bart {
                     console.log('Parsing group modifier');
                 } else if (tokens[0].value == 'sort') {
                     // TODO: Consume sort modifier
-                    [tokens, sortModifier] = consumeSortModifier(tokens);
+                    [tokens, sortModifier] = consumeSortModifier(tokens, storage);
                 } else {
                     break;
                 }

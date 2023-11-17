@@ -65,6 +65,7 @@ test('[Util] Test SortModifier timestamp sort', async () => {
         }
     }
 
+    let context = new Bart.TabContext();
     let storage = new DummyStorage();
     let modifier = new Bart.Parser.SortModifier('timestamp', '<', storage);
 
@@ -83,6 +84,20 @@ test('[Util] Test SortModifier timestamp sort', async () => {
 
     expect(results[0].id).toBe(1);
     expect(results[2].id).toBe(3);
+
+    modifier.relation = '>';
+    results = await modifier.sort(tabs);
+
+    expect(results[0].id).toBe(3);
+    expect(results[2].id).toBe(1);
+
+    let program = Bart.Parser.parse('sort ">" "timestamp"', context, storage);
+
+    // There should be identical results from the program itself
+    results = await program.sortModifier.sort(tabs);
+
+    expect(results[0].id).toBe(3);
+    expect(results[2].id).toBe(1);
 });
 
 test('uniq state test', async () => {
