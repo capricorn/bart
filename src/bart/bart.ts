@@ -425,15 +425,10 @@ namespace Bart {
                     relation = (a,b) => a > b;
                 }
 
-                console.log('sort comparator: %o', this);
-
                 if (this.field == 'timestamp') {
                     return async (a,b) => {
-                        console.log('a: %o, b: %o, relation: %o', a, b, relation);
                         let aTimestamp = await this.storage.get(a.id+'');
                         let bTimestamp = await this.storage.get(b.id+'');
-
-                        console.log('a ts: %o, b ts: %o', aTimestamp, bTimestamp);
 
                         aTimestamp = aTimestamp[a.id+''];
                         bTimestamp = bTimestamp[b.id+''];
@@ -732,11 +727,9 @@ namespace Bart {
                             childResult = await childFilter(tab, context);
                         }
 
-                        console.log('& Combinator filter computation');
                         if (this.combinator == '&') {
                             let promises: Promise<boolean>[] = filters.map(f => f(tab, context));
                             let results: boolean[] = await Promise.all(promises);
-                            console.log('results: %o', results);
                             return results.every(result => result) && childResult;
                         } else if (this.combinator == '|') {
                             return (await Promise.all(filters.map(f => f(tab, context)))).some(result => result) || childResult;
