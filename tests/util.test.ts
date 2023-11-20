@@ -1,6 +1,36 @@
 import { Util } from 'src/bart/util';
 import { Bart } from 'src/bart/bart';
 
+// TODO: Add to mocks / tests top-level for import?
+class DummyStorage implements Bart.Storage {
+    keys: { [key: string]: any };
+
+    constructor() {
+        this.keys = {};
+    }
+
+    // TODO: Doesn't map exactly with how storage works
+    get(key: string): Promise<any> {
+        return new Promise(resolver => {
+            let obj = {};
+            obj[key] = this.keys[key];
+            resolver(obj);
+        })
+    }
+
+    set(items: { [key: string]: any; }): Promise<void> {
+        for (const [key,_] of Object.entries(items)) {
+            this.keys[key] = items[key];
+        }
+
+        return;
+    }
+
+    erase(): Promise<void> {
+        return;
+    }
+}
+
 /*
 test('lazy decorator test', () => {
     let test = new Util.TestClass();
@@ -40,39 +70,14 @@ test('[Util] Test async sort', async () => {
 });
 
 test('[Util] Test SortModifier timestamp sort', async () => {
-    // TODO: Add to mocks / tests top-level for import?
-    class DummyStorage implements Bart.Storage {
-        keys: { [key: string]: any };
-
-        constructor() {
-            this.keys = {};
-        }
-
-        get(key: string): Promise<any> {
-            return this.keys[key];
-        }
-
-        set(items: { [key: string]: any; }): Promise<void> {
-            for (const [key,_] of Object.entries(items)) {
-                this.keys[key] = items[key];
-            }
-
-            return;
-        }
-
-        erase(): Promise<void> {
-            return;
-        }
-    }
-
     let context = new Bart.TabContext();
     let storage = new DummyStorage();
     let modifier = new Bart.Parser.SortModifier('timestamp', '<', storage);
 
     // Tab ids, timestamp
-    await storage.set({'1': '100'})
-    await storage.set({'2': '200'})
-    await storage.set({'3': '1000'})
+    await storage.set({'1': 100})
+    await storage.set({'2': 200})
+    await storage.set({'3': 1000})
 
     let tabs: Bart.DummyTab[] = [
         new Bart.DummyTab('', '', 0, 2),
@@ -80,7 +85,14 @@ test('[Util] Test SortModifier timestamp sort', async () => {
         new Bart.DummyTab('', '', 0, 1),
     ];
 
-    let results = await modifier.sort(tabs);
+    let timestampEquator = async (tab1, tab2) => {
+        let ts1 = await storage.get(tab1.id+'');
+        let ts2 = await storage.get(tab2.id+'');
+
+        return ts1[tab1.id+''] == ts2[tab2.id+''];
+    };
+
+    let results = await modifier.sort(tabs, timestampEquator);
 
     expect(results[0].id).toBe(1);
     expect(results[2].id).toBe(3);
@@ -102,7 +114,8 @@ test('[Util] Test SortModifier timestamp sort', async () => {
 
 test('uniq state test', async () => {
     let context = new Bart.TabContext();
-    let ast = Bart.Parser.parse('uniq "id"', context);
+    let storage = new DummyStorage();
+    let ast = Bart.Parser.parse('uniq "id"', context, storage);
 
     let filter = ast.filter.filter();
     //console.log('Filter: ' + ast.filter.print());
@@ -119,7 +132,8 @@ test('uniq state test', async () => {
 
 test('uniq test url field', async () => {
     let context = new Bart.TabContext();
-    let ast = Bart.Parser.parse('uniq "url"', context);
+    let storage = new DummyStorage();
+    let ast = Bart.Parser.parse('uniq "url"', context, storage);
 
     let filter = ast.filter.filter();
     let tab1 = new Bart.DummyTab('title1', 'url1', 0, 0);

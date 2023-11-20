@@ -53,13 +53,14 @@ namespace Util {
 
     // Inefficient but pretty.
     // TODO: Allow equator? 
-    export async function asyncSort<T>(arr: T[], comparator: AsyncComparator<T>): Promise<T[]> {
+    export async function asyncSort<T>(arr: T[], comparator: AsyncComparator<T>, equator: AsyncEquator<T> = defaultEquator()): Promise<T[]> {
         if (arr.length <= 1) {
             return arr;
         }
 
-        let argMin = await asyncArgMinimal(arr, comparator);
-        return [arr[argMin], ...arr.slice(0, argMin), ...arr.slice(argMin+1)];
+        let argMin = await asyncArgMinimal(arr, comparator, equator);
+        let sublist = await asyncSort([...arr.slice(0, argMin), ...arr.slice(argMin+1)], comparator, equator);
+        return [arr[argMin], ...sublist];
     }
 }
 

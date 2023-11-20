@@ -429,7 +429,7 @@ namespace Bart {
 
                 if (this.field == 'timestamp') {
                     return async (a,b) => {
-                        console.log('a: %o, b: %o', a, b);
+                        console.log('a: %o, b: %o, relation: %o', a, b, relation);
                         let aTimestamp = await this.storage.get(a.id+'');
                         let bTimestamp = await this.storage.get(b.id+'');
 
@@ -447,9 +447,9 @@ namespace Bart {
                 }
             }
 
-            async sort(tabs: Tab[]): Promise<Tab[]> {
+            async sort(tabs: Tab[], equator: Util.AsyncEquator<Tab> = Util.defaultEquator()): Promise<Tab[]> {
                 let comparator = this.buildComparator();
-                return await Util.asyncSort(tabs, comparator);
+                return await Util.asyncSort(tabs, comparator, equator);
             }
         }
 
