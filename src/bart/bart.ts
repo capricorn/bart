@@ -427,11 +427,20 @@ namespace Bart {
 
                 if (this.field == 'timestamp') {
                     return async (a,b) => {
-                        let aTimestamp = await this.storage.get(a.id+'');
+                        let aTimestamp = (await this.storage.get(a.id+''));
                         let bTimestamp = await this.storage.get(b.id+'');
 
-                        aTimestamp = aTimestamp[a.id+''];
-                        bTimestamp = bTimestamp[b.id+''];
+                        if (aTimestamp) {
+                            aTimestamp = aTimestamp[a.id+''];
+                        } else {
+                            aTimestamp = 0;
+                        }
+
+                        if (bTimestamp) {
+                            bTimestamp = bTimestamp[b.id+''];
+                        } else {
+                            bTimestamp = 0;
+                        }
 
                         return relation(aTimestamp, bTimestamp);
                     }
