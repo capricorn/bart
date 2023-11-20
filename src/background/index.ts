@@ -9,9 +9,9 @@ chrome.action.onClicked.addListener((activeTab) => {
 })
 
 chrome.tabs.onCreated.addListener((tab) => {
-    console.log('Opened tab: ' + tab.id);
+    console.log('Opened tab: %o', tab);
 
-    let timestamp = parseInt(Date.now()/1000);
+    let timestamp = Math.floor(Date.now()/1000);
 
     let entry = {}
     entry[tab.id+''] = timestamp;

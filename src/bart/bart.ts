@@ -425,10 +425,18 @@ namespace Bart {
                     relation = (a,b) => a > b;
                 }
 
+                console.log('sort comparator: %o', this);
+
                 if (this.field == 'timestamp') {
                     return async (a,b) => {
-                        let aTimestamp = parseInt(await this.storage.get(a.id+''));
-                        let bTimestamp = parseInt(await this.storage.get(b.id+''));
+                        console.log('a: %o, b: %o', a, b);
+                        let aTimestamp = await this.storage.get(a.id+'');
+                        let bTimestamp = await this.storage.get(b.id+'');
+
+                        console.log('a ts: %o, b ts: %o', aTimestamp, bTimestamp);
+
+                        aTimestamp = aTimestamp[a.id+''];
+                        bTimestamp = bTimestamp[b.id+''];
 
                         return relation(aTimestamp, bTimestamp);
                     }
