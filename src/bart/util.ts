@@ -41,11 +41,13 @@ namespace Util {
     }
 
     // TODO: Potential equality issues
-    export async function asyncArgMinimal<T>(arr: T[], comparator: AsyncComparator<T>, equator: AsyncEquator<T> = defaultEquator()): Promise<number> {
+    export async function asyncArgMinimal<T>(arr: T[], comparator: AsyncComparator<T>): Promise<number> {
         let minimal = await asyncMinimal(arr, comparator);
         for (let i = 0; i < arr.length; i++) {
-            let equal = await equator(minimal, arr[i]);
-            if (equal) {
+            // If the arg is minimal it will compare less than all other elements aside from itself.
+            // Note -- only works if the comparator does not contain equality.
+            let hitMin = (await comparator(minimal, arr[i]) == false);
+            if (hitMin) {
                 return i;
             }
         }
@@ -53,13 +55,13 @@ namespace Util {
 
     // Inefficient but pretty.
     // TODO: Allow equator? 
-    export async function asyncSort<T>(arr: T[], comparator: AsyncComparator<T>, equator: AsyncEquator<T> = defaultEquator()): Promise<T[]> {
+    export async function asyncSort<T>(arr: T[], comparator: AsyncComparator<T>): Promise<T[]> {
         if (arr.length <= 1) {
             return arr;
         }
 
-        let argMin = await asyncArgMinimal(arr, comparator, equator);
-        let sublist = await asyncSort([...arr.slice(0, argMin), ...arr.slice(argMin+1)], comparator, equator);
+        let argMin = await asyncArgMinimal(arr, comparator);
+        let sublist = await asyncSort([...arr.slice(0, argMin), ...arr.slice(argMin+1)], comparator);
         return [arr[argMin], ...sublist];
     }
 }

@@ -85,14 +85,7 @@ test('[Util] Test SortModifier timestamp sort', async () => {
         new Bart.DummyTab('', '', 0, 1),
     ];
 
-    let timestampEquator = async (tab1, tab2) => {
-        let ts1 = await storage.get(tab1.id+'');
-        let ts2 = await storage.get(tab2.id+'');
-
-        return ts1[tab1.id+''] == ts2[tab2.id+''];
-    };
-
-    let results = await modifier.sort(tabs, timestampEquator);
+    let results = await modifier.sort(tabs);
 
     expect(results[0].id).toBe(1);
     expect(results[2].id).toBe(3);

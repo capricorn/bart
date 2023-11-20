@@ -442,9 +442,9 @@ namespace Bart {
                 }
             }
 
-            async sort(tabs: Tab[], equator: Util.AsyncEquator<Tab> = Util.defaultEquator()): Promise<Tab[]> {
+            async sort(tabs: Tab[]): Promise<Tab[]> {
                 let comparator = this.buildComparator();
-                return await Util.asyncSort(tabs, comparator, equator);
+                return await Util.asyncSort(tabs, comparator);
             }
         }
 
