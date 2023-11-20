@@ -778,6 +778,10 @@
         color: blue;
     }
 
+    :global(.bart-sort-modifier) {
+        color: blue;
+    }
+
     :global(.bart-macro) {
         color: gray;
     }

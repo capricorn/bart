@@ -143,6 +143,9 @@ namespace Bart {
                     case TokenType.GroupModifier:
                         bartClass = "bart-group-modifier";
                         break;
+                    case TokenType.SortModifier:
+                        bartClass = "bart-sort-modifier"
+                        break;
                     case TokenType.Integer:
                         bartClass = "bart-integer";
                         break;
@@ -199,6 +202,7 @@ namespace Bart {
             Combinator,
             Command,
             GroupModifier,
+            SortModifier,
             Macro,
             Integer,
             Arithmetic,
@@ -335,6 +339,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Command, token.value));
                 } else if (Bart.Lexer.isGroupModifier(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.GroupModifier, token.value));
+                } else if (Bart.Lexer.isSortModifier(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.SortModifier, token.value));
                 } else if (Bart.Lexer.isMacro(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Macro, token.value));
                 } else if (Bart.Lexer.isInteger(token.value)) {
