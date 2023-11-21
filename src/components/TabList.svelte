@@ -283,7 +283,15 @@
             }
         }
 
-        filteredTabs = displayedTabs;
+        if (ast.sortModifier) {
+            // TODO: Better to stick with chrome's provided tab interface.
+            console.log('sorting tabs');
+            filteredTabs = await ast.sortModifier.sort(displayedTabs);
+        } else {
+            console.log('not sorting tabs');
+            filteredTabs = displayedTabs;
+        }
+        console.log('Filtered tabs: %o', filteredTabs);
         console.log('Filter count: ' + displayedTabs.length);
     }
 
@@ -767,6 +775,10 @@
     }
 
     :global(.bart-group-modifier) {
+        color: blue;
+    }
+
+    :global(.bart-sort-modifier) {
         color: blue;
     }
 

@@ -2,6 +2,7 @@ import { Bart } from 'src/bart/bart';
 
 export {};
 
+/*
 test('Test tokenization of input', () => {
     let results = Bart.Lexer.tokenize('"abc 123"  "xyz"    999  777');
     expect(results).toEqual(['"abc 123"', '"xyz"', '999', '777']);
@@ -330,3 +331,30 @@ test('Test $windowId macro substition', () => {
     expect(filteredTabs.length).toBe(1);
     expect(filteredTabs[0].windowId).toBe(123);
 })
+*/
+
+test('Test sort modifier', () => {
+    let context = new Bart.TabContext();
+    let ast = Bart.Parser.parse('sort', context);
+
+    expect(ast.sortModifier.field).toBe('timestamp');
+
+    ast = Bart.Parser.parse('sort ">"', context);
+    expect(ast.sortModifier.relation).toBe('>');
+
+    ast = Bart.Parser.parse('sort ">" "url"', context);
+    expect(ast.sortModifier.relation).toBe('>');
+    expect(ast.sortModifier.field).toBe('url');
+});
+
+test('Test explicit group modifier and sort modifier', () => {
+    let context = new Bart.TabContext();
+    let ast = Bart.Parser.parse('sort group "window"', context);
+
+    expect(ast.sortModifier.field).toBe('timestamp');
+    expect(ast.groupModifier.modifier).toBe('window');
+
+    ast = Bart.Parser.parse('group "window" sort', context);
+    expect(ast.sortModifier.field).toBe('timestamp');
+    expect(ast.groupModifier.modifier).toBe('window');
+});

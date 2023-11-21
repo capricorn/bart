@@ -17,6 +17,9 @@
  * Note: Combinator classification depends on immediate following arg
  */
 
+import { storage } from "src/storage";
+import { Util } from "./util";
+
 // First step: tokenize
 namespace Bart {
     export interface Tab {
@@ -140,6 +143,9 @@ namespace Bart {
                     case TokenType.GroupModifier:
                         bartClass = "bart-group-modifier";
                         break;
+                    case TokenType.SortModifier:
+                        bartClass = "bart-sort-modifier"
+                        break;
                     case TokenType.Integer:
                         bartClass = "bart-integer";
                         break;
@@ -196,6 +202,7 @@ namespace Bart {
             Combinator,
             Command,
             GroupModifier,
+            SortModifier,
             Macro,
             Integer,
             Arithmetic,
@@ -205,6 +212,10 @@ namespace Bart {
 
         export function isGroupModifier(token: string): boolean {
             return token == "group";
+        }
+
+        export function isSortModifier(token: string): boolean {
+            return token == 'sort';
         }
 
         export function isTimeUnit(token: string): boolean {
@@ -328,6 +339,8 @@ namespace Bart {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Command, token.value));
                 } else if (Bart.Lexer.isGroupModifier(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.GroupModifier, token.value));
+                } else if (Bart.Lexer.isSortModifier(token.value)) {
+                    tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.SortModifier, token.value));
                 } else if (Bart.Lexer.isMacro(token.value)) {
                     tokens.push(new Bart.Lexer.Token(token.start, token.end, Bart.Lexer.TokenType.Macro, token.value));
                 } else if (Bart.Lexer.isInteger(token.value)) {
@@ -394,6 +407,55 @@ namespace Bart {
 
     export namespace Parser {
         export class ParseError extends Error {}
+
+        export class SortModifier {
+            field: string;
+            relation: string;
+            storage: Storage;
+
+            constructor(field: string, relation: string, storage: Storage = new ChromeLocalStorage()) {
+                this.field = field;
+                this.relation = relation;
+                this.storage = storage;
+            }
+
+            buildComparator(): Util.AsyncComparator<Tab> {
+                let relation = (a,b) => a < b;
+                if (this.relation == '>') {
+                    relation = (a,b) => a > b;
+                }
+
+                if (this.field == 'timestamp') {
+                    return async (a,b) => {
+                        let aTimestamp = (await this.storage.get(a.id+''));
+                        let bTimestamp = await this.storage.get(b.id+'');
+
+                        if (aTimestamp) {
+                            aTimestamp = aTimestamp[a.id+''];
+                        } else {
+                            aTimestamp = 0;
+                        }
+
+                        if (bTimestamp) {
+                            bTimestamp = bTimestamp[b.id+''];
+                        } else {
+                            bTimestamp = 0;
+                        }
+
+                        return relation(aTimestamp, bTimestamp);
+                    }
+                } else {
+                    return async (a,b) => {
+                        return relation(a,b);
+                    }
+                }
+            }
+
+            async sort(tabs: Tab[]): Promise<Tab[]> {
+                let comparator = this.buildComparator();
+                return await Util.asyncSort(tabs, comparator);
+            }
+        }
 
         export class GroupModifier {
             modifier: string;
@@ -674,11 +736,9 @@ namespace Bart {
                             childResult = await childFilter(tab, context);
                         }
 
-                        console.log('& Combinator filter computation');
                         if (this.combinator == '&') {
                             let promises: Promise<boolean>[] = filters.map(f => f(tab, context));
                             let results: boolean[] = await Promise.all(promises);
-                            console.log('results: %o', results);
                             return results.every(result => result) && childResult;
                         } else if (this.combinator == '|') {
                             return (await Promise.all(filters.map(f => f(tab, context)))).some(result => result) || childResult;
@@ -707,6 +767,7 @@ namespace Bart {
             args: StringCombinator | undefined
             filter: FilterCombinator | undefined
             groupModifier: GroupModifier;
+            sortModifier: SortModifier | undefined;
             browser: Browser;
 
             constructor(
@@ -714,6 +775,7 @@ namespace Bart {
                 args: StringCombinator | undefined,
                 filter: FilterCombinator | undefined,
                 groupModifier: GroupModifier = GroupModifier.none,
+                sortModifier: SortModifier | undefined = undefined,
                 browser: Browser = new Browser()
             ) {
                 super();
@@ -721,6 +783,7 @@ namespace Bart {
                 this.args = args;
                 this.filter = filter;
                 this.groupModifier = groupModifier;
+                this.sortModifier = sortModifier;
                 this.browser = browser;
             }
 
@@ -752,7 +815,7 @@ namespace Bart {
 
             static noop(browser: Browser = new Browser()): Command {
                 let filter = new MatchAllFilterCombinator();
-                return new Command('.', StringCombinator.emptyCombinator, filter, GroupModifier.none, browser);
+                return new Command('.', StringCombinator.emptyCombinator, filter, GroupModifier.none, undefined, browser);
             }
 
             modifier(mod: GroupModifier): Command {
@@ -761,6 +824,7 @@ namespace Bart {
                     this.args,
                     this.filter,
                     mod,
+                    undefined,
                     this.browser
                 );
             }
@@ -802,7 +866,29 @@ namespace Bart {
             return Lexer.isCombinator(tokens[0].value) && Lexer.isFilter(tokens[1].value);
         }
 
-        export function consumeGroupModifier(tokens: Lexer.Token[]): GroupModifier {
+        export function consumeSortModifier(tokens: Lexer.Token[], storage: Storage = new ChromeLocalStorage()): [remaining: Lexer.Token[], modifier: SortModifier] {
+            if (Lexer.isSortModifier(tokens[0].value) == false) {
+                throw new ParseError();
+            }
+
+            tokens = tokens.slice(1);
+            let relation = '<';
+            let field = 'timestamp';
+
+            // TODO: Pattern matching?
+            if (tokens.length >= 2 && Lexer.isString(tokens[0].value) && Lexer.isString(tokens[1].value)) {
+                relation = tokens[0].value.slice(1,-1);
+                field = tokens[1].value.slice(1,-1);
+                tokens = tokens.slice(2);
+            } else if (tokens.length >= 1 && Lexer.isString(tokens[0].value)) {
+                relation = tokens[0].value.slice(1,-1);
+                tokens = tokens.slice(1);
+            }
+
+            return [tokens, new SortModifier(field, relation, storage)];
+        }
+
+        export function consumeGroupModifier(tokens: Lexer.Token[]): [remaining: Lexer.Token[], modifier: GroupModifier] {
             // The first token will be 'group'
             if (Bart.Lexer.isGroupModifier(tokens[0].value) == false) {
                 throw new ParseError();
@@ -814,7 +900,9 @@ namespace Bart {
                 throw new ParseError();
             }
 
-            return new GroupModifier(tokens[0].value.slice(1,-1));
+            let modifier = new GroupModifier(tokens[0].value.slice(1,-1));
+            // Skip the arg
+            return [tokens.slice(1), modifier];
         }
 
         // TODO
@@ -943,7 +1031,7 @@ namespace Bart {
                     // Should have consumed all tokens here
                     tokens = remainder;
                     break;
-                } else if (Bart.Lexer.isGroupModifier(tokens[0].value)) {
+                } else if (Bart.Lexer.isGroupModifier(tokens[0].value) || Lexer.isSortModifier(tokens[0].value)) {
                     break;
                 } else {
                     throw new ParseError();
@@ -1018,7 +1106,7 @@ namespace Bart {
             return tokens;
         }
 
-        export function parse(input: string, context: Context): Command {
+        export function parse(input: string, context: Context, storage: Storage = new ChromeLocalStorage()): Command {
             let command: Command = Command.noop();
             let commandSymbol = command.type;
             let commandArgs = StringCombinator.emptyCombinator;
@@ -1042,18 +1130,28 @@ namespace Bart {
             // A command w/out a filter assumes the match-all filter
             let filterCombinator = Filter.matchAllFilter;
             let groupModifier = GroupModifier.none;
+            let sortModifier = undefined;
 
             if (tokens.length > 0) {
                 [filterCombinator, tokens] = consumeFilterCombinator(tokens);
             }
 
+            // After all tokens are parsed, group or sort modifier
             // If there is a group modifier it will remain after all other tokens are parsed.
-            if (tokens.length > 0) {
-                groupModifier = consumeGroupModifier(tokens);
-                console.log('Parsing group modifier');
+            // Allow group or sort modifier regardless of order
+            while (tokens.length > 0) {
+                if (tokens[0].value == 'group') {
+                    [tokens, groupModifier] = consumeGroupModifier(tokens);
+                    console.log('Parsing group modifier');
+                } else if (tokens[0].value == 'sort') {
+                    // TODO: Consume sort modifier
+                    [tokens, sortModifier] = consumeSortModifier(tokens, storage);
+                } else {
+                    break;
+                }
             }
 
-            return new Command(commandSymbol, commandArgs, filterCombinator, groupModifier);
+            return new Command(commandSymbol, commandArgs, filterCombinator, groupModifier, sortModifier);
         }
     }
 
