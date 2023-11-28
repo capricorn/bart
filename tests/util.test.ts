@@ -2,7 +2,7 @@ import { Util } from 'src/bart/util';
 import { Bart } from 'src/bart/bart';
 
 // TODO: Add to mocks / tests top-level for import?
-class DummyStorage implements Bart.Storage {
+export class DummyStorage implements Bart.Storage {
     keys: { [key: string]: any };
 
     constructor() {

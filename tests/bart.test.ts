@@ -1,4 +1,6 @@
 import { Bart } from 'src/bart/bart';
+import { DummyStorage } from 'tests/util.test';
+import { Util } from 'src/bart/util';
 
 export {};
 
@@ -335,26 +337,45 @@ test('Test $windowId macro substition', () => {
 
 test('Test sort modifier', () => {
     let context = new Bart.TabContext();
-    let ast = Bart.Parser.parse('sort', context);
+    let storage = new DummyStorage();
+    let ast = Bart.Parser.parse('sort', context, storage);
 
     expect(ast.sortModifier.field).toBe('timestamp');
 
-    ast = Bart.Parser.parse('sort ">"', context);
+    ast = Bart.Parser.parse('sort ">"', context, storage);
     expect(ast.sortModifier.relation).toBe('>');
 
-    ast = Bart.Parser.parse('sort ">" "url"', context);
+    ast = Bart.Parser.parse('sort ">" "url"', context, storage);
     expect(ast.sortModifier.relation).toBe('>');
     expect(ast.sortModifier.field).toBe('url');
 });
 
 test('Test explicit group modifier and sort modifier', () => {
     let context = new Bart.TabContext();
-    let ast = Bart.Parser.parse('sort group "window"', context);
+    let storage = new DummyStorage();
+    let ast = Bart.Parser.parse('sort group "window"', context, storage);
 
     expect(ast.sortModifier.field).toBe('timestamp');
     expect(ast.groupModifier.modifier).toBe('window');
 
-    ast = Bart.Parser.parse('group "window" sort', context);
+    ast = Bart.Parser.parse('group "window" sort', context, storage);
     expect(ast.sortModifier.field).toBe('timestamp');
     expect(ast.groupModifier.modifier).toBe('window');
 });
+
+test('Test title filter shorthand', async () => {
+    let context = new Bart.TabContext();
+    let storage = new DummyStorage();
+
+    let tabs = [
+        new Bart.DummyTab('"xyz"', ' ', 30, 1),
+        new Bart.DummyTab('"rst"', ' ', 70, 2),
+        new Bart.DummyTab('"abc"', ' ', 70, 3),
+    ];
+
+    let ast = Bart.Parser.parse('t "xyz"', context, storage);
+    let filter = ast.filter.filter();
+    let results = await Util.asyncFilter((tab: Bart.Tab) => filter(tab, context), tabs);
+
+    expect(results.length).toBe(1);
+})
