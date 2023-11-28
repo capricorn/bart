@@ -246,7 +246,15 @@ namespace Bart {
         }
 
         export function isFilter(token: string): boolean {
-            return [ 'title', 'url', 'curr', '$', 'windowId', 'since', 'uniq' ].includes(token);
+            return [ 
+                'title', 't',
+                'url', 'u',
+                'curr', 'c',
+                '$', 
+                'windowId', 'w',
+                'since', 's',
+                'uniq', '%' 
+            ].includes(token);
         }
 
         export function isNegation(token: string): boolean {
@@ -591,6 +599,30 @@ namespace Bart {
             }
         }
 
+        // TODO: Static builder from string
+        enum FilterType {
+            Title,
+            Url,
+            Curr,
+            WindowId,
+            Since,
+            Uniq,
+            Selected    // $
+        }
+
+        namespace FilterType {
+            export function tabKey(type: FilterType): string | undefined {
+                switch (type) {
+                    case FilterType.Title:
+                        return "title";
+                    case FilterType.Url:
+                        return "url"
+                    default:
+                        return undefined;
+                }
+            }
+        }
+
         export class Filter extends PrettyPrint {
             type: string
             arg: StringCombinator
@@ -607,6 +639,25 @@ namespace Bart {
                 this.cachedFilter = undefined;
             }
 
+            get filterType(): FilterType | undefined {
+                let nameMap = [
+                    { names: ['title', 't'], type: FilterType.Title },
+                    { names: ['url', 'u'], type: FilterType.Url },
+                    { names: ['curr', 'c'], type: FilterType.Curr },
+                    { names: ['windowId', 'wId'], type: FilterType.WindowId },
+                    { names: ['since', 's'], type: FilterType.Since },
+                    { names: ['uniq', '%'], type: FilterType.Uniq },
+                ];
+
+                for (const pair of nameMap) {
+                    if (pair.names.includes(this.type)) {
+                        return pair.type;
+                    }
+                }
+
+                return undefined;
+            }
+
             print(): string {
                 return `<span class="bart-filter">${this.type}</span>` +
                     ' ' + this.arg.print();
@@ -618,36 +669,14 @@ namespace Bart {
                     return this.cachedFilter;
                 } else {
                     console.log('Setting filter');
-                    // TODO: Reference enum of defined types..? (Somewhat ugly in TS?) 
-                    switch (this.type) {
-                        case 'uniq':
-                            let statefulFilter = () => {
-                                console.log('Building stateful filter');
-                                const prev = new Set();
-                                return async (tab: Tab, context: Context): Promise<boolean> => {
-                                    let field = 'url';
-                                    if (this.arg.strings.length > 0) {
-                                        field = this.arg.strings[0].slice(1,-1);
-                                    }
 
-                                    if (prev.has(tab[field]+'')) {
-                                        return false;
-                                    }
-
-                                    prev.add(tab[field]+'');
-                                    return true;
-                                }
-                            }
-
-                            this.cachedFilter = statefulFilter();
-                            break;
-                        case 'curr':
+                    switch (this.filterType) {
+                        case FilterType.Curr:
                             this.cachedFilter = async (tab: Tab, context: Context) => { return tab.windowId == context.currentWindowId };
                             break;
-                        case '$':
-                            this.cachedFilter = async (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
+                        case FilterType.WindowId:
                             break;
-                        case 'since':
+                        case FilterType.Since:
                             this.cachedFilter = async (tab: Tab, context: Context) => { 
                                 let tabTimestamp = await context.storage.get(tab.id+'');
                                 if (tabTimestamp) {
@@ -669,9 +698,34 @@ namespace Bart {
                                 return combinator(elapsedTime+'');
                             };
                             break;
+                        case FilterType.Uniq:
+                            let statefulFilter = () => {
+                                console.log('Building stateful filter');
+                                const prev = new Set();
+                                return async (tab: Tab, context: Context): Promise<boolean> => {
+                                    let field = 'url';
+                                    if (this.arg.strings.length > 0) {
+                                        field = this.arg.strings[0].slice(1,-1);
+                                    }
+
+                                    if (prev.has(tab[field]+'')) {
+                                        return false;
+                                    }
+
+                                    prev.add(tab[field]+'');
+                                    return true;
+                                }
+                            }
+
+                            this.cachedFilter = statefulFilter();
+                            break;
+                        case FilterType.Selected:
+                            this.cachedFilter = async (tab: Tab, context: Context) => { return context.selectedTabIds.has(tab.id) };
+                            break;
                         default:
                             let stringFilter = this.arg.filter();
-                            this.cachedFilter = async (tab: Tab, context: Context) => { return stringFilter(tab[this.type]+'') };
+                            let tabKey = FilterType.tabKey(this.filterType);
+                            this.cachedFilter = async (tab: Tab, context: Context) => { return stringFilter(tab[tabKey]+'') };
                             break;
                     }
 

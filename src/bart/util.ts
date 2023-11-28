@@ -22,6 +22,7 @@ namespace Util {
     }
 
 
+    export type AsyncFilter<T> = (e: T) => Promise<boolean>;
     export type AsyncComparator<T> = (a:T, b:T) => Promise<Boolean>;
     export type AsyncEquator<T> = (a:T, b:T) => Promise<Boolean>;
 
@@ -63,6 +64,18 @@ namespace Util {
         let argMin = await asyncArgMinimal(arr, comparator);
         let sublist = await asyncSort([...arr.slice(0, argMin), ...arr.slice(argMin+1)], comparator);
         return [arr[argMin], ...sublist];
+    }
+
+    export async function asyncFilter<T>(filter: AsyncFilter<T>, arr: T[]): Promise<T[]> {
+        let results = [];
+
+        for (const e of arr) {
+            if (await filter(e)) {
+                results.push(e);
+            }
+        }
+
+        return results;
     }
 }
 
