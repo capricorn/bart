@@ -861,7 +861,7 @@ namespace Bart {
             // TODO: Filter the tabs here instead..? And then return them?
             async execute(filteredTabs: Tab[]) {
                 switch (this.type) {
-                    case '.':
+                    case '':
                         // Do nothing.
                         console.log('noop, moving along.')
                         break;
@@ -884,7 +884,7 @@ namespace Bart {
 
             static noop(browser: Browser = new Browser()): Command {
                 let filter = new MatchAllFilterCombinator();
-                return new Command('.', StringCombinator.emptyCombinator, filter, GroupModifier.none, undefined, browser);
+                return new Command('', StringCombinator.emptyCombinator, filter, GroupModifier.none, undefined, browser);
             }
 
             modifier(mod: GroupModifier): Command {
