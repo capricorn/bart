@@ -242,7 +242,7 @@ namespace Bart {
         }
 
         export function isMacro(token: string): boolean {
-            return token.startsWith('$');
+            return token.startsWith('$') && token.length > 1;
         }
 
         export function isFilter(token: string): boolean {
@@ -647,6 +647,7 @@ namespace Bart {
                     { names: ['windowId', 'wId'], type: FilterType.WindowId },
                     { names: ['since', 's'], type: FilterType.Since },
                     { names: ['uniq', '%'], type: FilterType.Uniq },
+                    { names: ['$'], type: FilterType.Selected }
                 ];
 
                 for (const pair of nameMap) {
