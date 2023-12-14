@@ -261,7 +261,7 @@ namespace Bart {
                 'curr', '.',
                 '$', 
                 'windowId', 'w',
-                'since', 's',
+                'since', ':',
                 'uniq', '%' 
             ].includes(token);
         }
@@ -654,7 +654,7 @@ namespace Bart {
                     { names: ['url', 'u'], type: FilterType.Url },
                     { names: ['curr', '.'], type: FilterType.Curr },
                     { names: ['windowId', 'wId'], type: FilterType.WindowId },
-                    { names: ['since', 's'], type: FilterType.Since },
+                    { names: ['since', ':'], type: FilterType.Since },
                     { names: ['uniq', '%'], type: FilterType.Uniq },
                     { names: ['$'], type: FilterType.Selected }
                 ];
