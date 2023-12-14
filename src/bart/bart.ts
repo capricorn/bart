@@ -72,6 +72,15 @@ namespace Bart {
                 await chrome.bookmarks.create({ title: tab.title, parentId: folderNode.id, url: tab.url });
             }
         }
+
+        async move(tabs: Tab[], windowId?: number) {
+            if (windowId == undefined) {
+                windowId = (await chrome.windows.create({focused: false})).id;
+            }
+
+            let tabIds = tabs.map(tab => tab.id);
+            await chrome.tabs.move(tabIds, {index: -1, windowId: windowId});
+        }
     }
 
     export class TabContext implements Context {
@@ -242,7 +251,7 @@ namespace Bart {
         }
 
         export function isMacro(token: string): boolean {
-            return token.startsWith('$');
+            return token.startsWith('$') && token.length > 1;
         }
 
         export function isFilter(token: string): boolean {
@@ -266,7 +275,7 @@ namespace Bart {
         }
 
         export function isCommand(token: string): boolean {
-            return ['.', 'bm'].includes(token);
+            return ['.', 'bm', 'move'].includes(token);
         }
 
         export function tokenize(input: string): RawToken[] {
@@ -647,6 +656,7 @@ namespace Bart {
                     { names: ['windowId', 'wId'], type: FilterType.WindowId },
                     { names: ['since', 's'], type: FilterType.Since },
                     { names: ['uniq', '%'], type: FilterType.Uniq },
+                    { names: ['$'], type: FilterType.Selected }
                 ];
 
                 for (const pair of nameMap) {
@@ -860,6 +870,11 @@ namespace Bart {
                         // Should take a single string argument
                         await this.browser.bookmark(filteredTabs, this.args.quoteless[0]);
                         // TODO: Implement bookmarking
+                        break;
+                    case 'move':
+                        console.log('Moving filtered tabs');
+                        // Create a new window and move all tabs to it
+                        await this.browser.move(filteredTabs);
                         break;
                     default: 
                         console.log('Attempting to execute unrecognized command: ' + this.type);
