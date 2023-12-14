@@ -258,7 +258,7 @@ namespace Bart {
             return [ 
                 'title', 't',
                 'url', 'u',
-                'curr', 'c',
+                'curr', '.',
                 '$', 
                 'windowId', 'w',
                 'since', 's',
@@ -275,7 +275,7 @@ namespace Bart {
         }
 
         export function isCommand(token: string): boolean {
-            return ['.', 'bm', 'move'].includes(token);
+            return ['bm', 'move'].includes(token);
         }
 
         export function tokenize(input: string): RawToken[] {
@@ -652,7 +652,7 @@ namespace Bart {
                 let nameMap = [
                     { names: ['title', 't'], type: FilterType.Title },
                     { names: ['url', 'u'], type: FilterType.Url },
-                    { names: ['curr', 'c'], type: FilterType.Curr },
+                    { names: ['curr', '.'], type: FilterType.Curr },
                     { names: ['windowId', 'wId'], type: FilterType.WindowId },
                     { names: ['since', 's'], type: FilterType.Since },
                     { names: ['uniq', '%'], type: FilterType.Uniq },
