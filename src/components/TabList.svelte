@@ -7,6 +7,7 @@
     import { Menu } from "./menu";
     import { writable } from "svelte/store";
     import SelectionRectangle from "./SelectionRectangle.svelte";
+    import { Util } from  "src/bart/util";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -19,6 +20,8 @@
     let hoveredTab: Tab = undefined;
     let bartFilterInput = '';
     let inputCursorPosition = 0;
+
+    let debounceScheduler = Util.DebounceScheduler.instance;
 
     // TODO: A better default?
     let groupBySelection = "none";
