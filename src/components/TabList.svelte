@@ -7,6 +7,7 @@
     import { Menu } from "./menu";
     import { writable } from "svelte/store";
     import SelectionRectangle from "./SelectionRectangle.svelte";
+    import { Util } from  "src/bart/util";
 
     type Tab = chrome.tabs.Tab;
     type Window = chrome.windows.Window;
@@ -19,6 +20,8 @@
     let hoveredTab: Tab = undefined;
     let bartFilterInput = '';
     let inputCursorPosition = 0;
+
+    let debounceScheduler = Util.DebounceScheduler.instance;
 
     // TODO: A better default?
     let groupBySelection = "none";
@@ -40,6 +43,10 @@
     // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
     let tabSelectEndCoord: [x: number, y: number] = undefined;
 
+    enum DebounceTaskIdentifier {
+        tabSelect = "tabSelect"
+    };
+
     $: cursorStyle = (() => { 
         if (tabSelectStartCoord) {
             return "cursor: crosshair;"
@@ -55,14 +62,6 @@
 
     // TODO: Update in window mouse events
     let mouseState: [left: MouseButtonState, right: MouseButtonState] = [MouseButtonState.down, MouseButtonState.down];
-
-    function debounce(debounceTime: number, guard: () => boolean, action: () => void) {
-        setTimeout(() => {
-            if (guard()) {
-                action();
-            }
-        }, debounceTime);
-    }
 
     // TODO: Find approach that still supports typechecking
     DOMRect.prototype['overlap'] = function (rect: DOMRect): boolean {
@@ -158,8 +157,10 @@
         }
 
         console.log('mouse down event');
-        debounce(300, () => { return mouseState[0] == MouseButtonState.down }, () => {
-            tabSelectStartCoord = [event.clientX, event.clientY];
+        debounceScheduler.submit(DebounceTaskIdentifier.tabSelect, 300, () => {
+            if (mouseState[0] == MouseButtonState.down) {
+                tabSelectStartCoord = [event.clientX, event.clientY];
+            }
         });
     }
 

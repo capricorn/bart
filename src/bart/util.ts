@@ -77,6 +77,50 @@ namespace Util {
 
         return results;
     }
+
+    export class DebounceScheduler {
+        private events: Map<string, DebounceScheduler.Event> = new Map();
+        static instance: DebounceScheduler = new DebounceScheduler();
+
+        private static loop() {
+            let scheduler = DebounceScheduler.instance;
+            let now = Date.now();
+            let entries = Array.from(scheduler.events.entries());
+
+            for (const [key,event] of entries) {
+                if (now >= event.execTime) {
+                    event.callback();
+                    scheduler.events.delete(key);
+                }
+            }
+        }
+
+        private constructor() {
+            setInterval(DebounceScheduler.loop, 20);
+        }
+
+        submit(key: string, debounce: number, callback: DebounceScheduler.Callback) {
+            this.events.set(key, new DebounceScheduler.Event(debounce, callback));
+        }
+    }
+
+    export namespace DebounceScheduler {
+        export type Callback = () => void;
+
+        export class Event {
+            execTime: number;
+            callback: Callback;
+
+            constructor(debounce: number, callback: Callback) {
+                this.execTime = Date.now() + debounce;
+                this.callback = callback;
+            }
+        }
+    }
+
+    
+
+    
 }
 
 export { Util };
