@@ -43,9 +43,28 @@
     // The opposite (x,y) corner of the selection rectangle -- current (or final) mouse location.
     let tabSelectEndCoord: [x: number, y: number] = undefined;
 
+    let pageSelectStartCoord: [x: number, y: number];
+    $: pageSelectStartCoord = (() => {
+        if (tabSelectStartCoord) {
+            return [tabSelectStartCoord[0], tabSelectStartCoord[1]+containerScrollY];
+        }
+        return undefined;
+    })();
+
+    let pageSelectEndCoord: [x: number, y: number];
+    $: pageSelectEndCoord = (() => {
+        if (tabSelectEndCoord) {
+            return [tabSelectEndCoord[0], tabSelectEndCoord[1]+containerScrollY];
+        }
+
+        return undefined;
+    })();
+
     enum DebounceTaskIdentifier {
         tabSelect = "tabSelect"
     };
+
+    let containerScrollY: number = 0;
 
     $: cursorStyle = (() => { 
         if (tabSelectStartCoord) {
@@ -588,7 +607,8 @@
     on:click={globalClickHandler} 
     on:mousedown={handleContainerMouseDown} 
     on:mouseup={handleContainerMouseUp}
-    on:mousemove={handleContainerMouseMove}/>
+    on:mousemove={handleContainerMouseMove}
+    bind:scrollY={containerScrollY}/>
 
 <div id="container" style={cursorStyle}>
     <div id="control-header">
@@ -702,7 +722,7 @@
 {/if}
 
 {#if tabSelectStartCoord != undefined && tabSelectEndCoord != undefined}
-<SelectionRectangle startCoord={tabSelectStartCoord} endCoord={tabSelectEndCoord}/>
+<SelectionRectangle startCoord={pageSelectStartCoord} endCoord={pageSelectEndCoord}/>
 {/if}
 
 <style>
