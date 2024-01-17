@@ -124,11 +124,63 @@
         }
     }
 
+
     let lastSlotHTML: string = '<span id="bart-filter-last-slot">_</span>';
 
     async function timestamp(tab: Tab): Promise<any> {
         // TODO: Typed approach to this?
         return await chrome.storage.local.get(tab.id+'');
+    }
+
+    let intersectedTabs: Set<number> = new Set();
+
+    $: {
+        console.log('intersected tabs: ' + [...intersectedTabs]);
+    }
+
+    let liveTabIds: Set<number>;
+    $: liveTabIds = (() => {
+        let ids: Set<number> = new Set();
+        for (const id of selectedTabIds) {
+            ids.add(id);
+        }
+
+        for (const id of intersectedTabs) {
+            ids.add(id);
+        }
+
+        console.log('live ids: ' + [...ids]);
+        return ids;
+    })();
+
+
+    // WIP
+    function intersectingTabs(): Set<number> {
+        // TODO: Optimize -- no need for O(n) here
+        if (tabSelectStartCoord && tabSelectEndCoord) {
+            // TODO: Filter out tabs that are not currently in the viewport.
+            // Must iterate these in order to get bounding rect of each tab
+            let tabs = document.getElementsByClassName('tab');
+            let intersecting: Set<number> = new Set();
+
+            for (const tab of tabs) {
+                // TODO: Skip aside from filtered tabs
+                // TODO: Ony iterate tabs in viewport
+                // TODO: Live highlight?
+                let rect = tab.getBoundingClientRect();
+
+                // TODO: Relies on an end that is not defined here -- update end on mouse move 
+                if (tabSelectRect['overlap'](rect)) {
+                    let tabId = tab.id.replace('tab-', '');
+                    console.log(tab.id + '/ overlap: '+tabId);
+                    intersecting.add(Number(tabId));
+                }
+            }
+
+            return intersecting;
+        }
+
+        return new Set();
     }
 
     function handleContainerMouseUp(event: MouseEvent) {
@@ -159,6 +211,7 @@
 
             tabSelectStartCoord = undefined;
             tabSelectEndCoord = undefined;
+            intersectedTabs = new Set();
         }
     }
 
@@ -188,6 +241,7 @@
         console.log('mouse move: ' + event);
         // Indicates that a tab selection region is being drawn
         if (tabSelectStartCoord) {
+            intersectedTabs = intersectingTabs();
             tabSelectEndCoord = [event.clientX, event.clientY];
         }
     }
@@ -654,7 +708,7 @@
             <div id="tab-{tab.id}" class="{hoveredTab?.id == tab.id ? "tab hovered_tab" : "tab"}"
                 on:click={() => selectTab(tab)} 
                 on:mouseover={() => mouseOverTab(tab)}
-                style="background-color: {selectedTabIds.has(tab.id) ? "orange" : "white"}">
+                style="background-color: {liveTabIds.has(tab.id) ? "orange" : "white"}">
 
                 {tab.title}
                 <br>
