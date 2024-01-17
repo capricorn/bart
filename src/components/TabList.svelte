@@ -211,6 +211,7 @@
 
             tabSelectStartCoord = undefined;
             tabSelectEndCoord = undefined;
+            intersectedTabs = new Set();
         }
     }
 
